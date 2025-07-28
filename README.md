@@ -64,11 +64,11 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 Use the dashboard runner to start both the MCP server and web interface:
 
 ```bash
-python run_dashboard.py
+python3 run_dashboard.py
 ```
 
 This will start:
-- **Web Dashboard** at http://localhost:5000
+- **Web Dashboard** at http://localhost:5001
 - **MCP Server** ready for connections
 
 ### Option 2: Run Services Separately
@@ -76,7 +76,7 @@ This will start:
 #### Running the MCP Server Only
 
 ```bash
-python server.py
+python3 server.py
 ```
 
 The server will start and be ready to accept MCP connections.
@@ -84,10 +84,76 @@ The server will start and be ready to accept MCP connections.
 #### Running the Web Dashboard Only
 
 ```bash
-python web_app.py
+python3 web_app.py
 ```
 
-The web dashboard will be available at http://localhost:5000
+The web dashboard will be available at http://localhost:5001
+
+### 🖥️ Frontend Web Dashboard
+
+The web dashboard provides a beautiful, real-time interface to view your security scan results:
+
+#### Quick Start
+
+1. **Start the web dashboard:**
+   ```bash
+   python3 web_app.py
+   ```
+
+2. **Open your browser:**
+   ```
+   http://localhost:5001
+   ```
+
+3. **View your results:**
+   - Latest scan results with severity indicators
+   - Complete scan history
+   - Detailed security analysis
+   - Code recommendations with syntax highlighting
+
+#### Dashboard Features
+
+- **📊 Real-time Updates**: Automatically refreshes every 5 seconds
+- **🎨 Modern UI**: Beautiful gradient design with Tailwind CSS
+- **🚨 Severity Indicators**: Color-coded risk levels (Critical/Medium/Low)
+- **📝 Code Highlighting**: Syntax-highlighted security recommendations
+- **📚 Scan History**: Click any scan for detailed view
+- **📈 Summary Cards**: Quick overview of risk counts and statistics
+
+#### Dashboard URLs
+
+- **Main Dashboard**: http://localhost:5001
+- **API Endpoint**: http://localhost:5001/api/scan
+- **Latest Results**: http://localhost:5001/api/results
+- **Scan History**: http://localhost:5001/api/history
+
+#### Troubleshooting the Frontend
+
+**Port 5000 already in use:**
+```bash
+# Kill any process using port 5000
+lsof -ti:5000 | xargs kill -9
+
+# Or use the default port 5001
+python3 web_app.py
+```
+
+**Dashboard not loading:**
+```bash
+# Check if the web app is running
+curl http://localhost:5001/api/results
+
+# Restart the web app
+python3 web_app.py
+```
+
+**No data showing:**
+```bash
+# Send test data to verify the API
+curl -X POST http://localhost:5001/api/scan \
+  -H "Content-Type: application/json" \
+  -d '{"success":true,"message":"Test scan","constraints":[],"risks":[]}'
+```
 
 ### Using with MCP Clients
 
@@ -193,7 +259,7 @@ security:
    3 files need security annotations
 ✅ Annotated 2 risks in agent.py
 ✅ Annotated 1 risks in utils.py
-✅ Results sent to web app at http://localhost:5000
+✅ Results sent to web app at http://localhost:5001
 
 📋 Security Analysis Summary:
    Total risks identified: 8
