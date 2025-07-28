@@ -635,8 +635,8 @@ def send_results_to_webapp(results):
     try:
         import requests
         
-        # Web app URL (default to localhost:5000)
-        webapp_url = os.environ.get("WEBAPP_URL", "http://localhost:5000")
+        # Web app URL (default to localhost:5001)
+        webapp_url = os.environ.get("WEBAPP_URL", "http://localhost:5001")
         api_endpoint = f"{webapp_url}/api/scan"
         
         # Send POST request with results

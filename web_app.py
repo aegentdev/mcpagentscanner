@@ -80,7 +80,7 @@ if __name__ == '__main__':
     os.makedirs('static/js', exist_ok=True)
     
     print("🚀 Starting MCP Scanner Web App...")
-    print("📊 Dashboard will be available at: http://localhost:5000")
-    print("📡 API endpoint for results: http://localhost:5000/api/scan")
+    print("📊 Dashboard will be available at: http://localhost:5001")
+    print("📡 API endpoint for results: http://localhost:5001/api/scan")
     
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    app.run(debug=True, host='0.0.0.0', port=5001) 

@@ -62,7 +62,7 @@ def main():
     print()
     
     # Start web app in background
-    web_process = run_command("python web_app.py", "Web Dashboard")
+    web_process = run_command("python3 web_app.py", "Web Dashboard")
     if not web_process:
         return 1
     
@@ -70,14 +70,14 @@ def main():
     time.sleep(3)
     
     # Start MCP server
-    mcp_process = run_command("python server.py", "MCP Server")
+    mcp_process = run_command("python3 server.py", "MCP Server")
     if not mcp_process:
         web_process.terminate()
         return 1
     
     print()
     print("✅ Both services are running!")
-    print("📊 Web Dashboard: http://localhost:5000")
+    print("📊 Web Dashboard: http://localhost:5001")
     print("🔧 MCP Server: Ready for connections")
     print()
     print("Press Ctrl+C to stop both services")
