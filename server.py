@@ -630,6 +630,35 @@ def retrieve_context(query, k=3):
         print(f"⚠️ Context retrieval failed: {e}")
         return ""
 
+def send_results_to_webapp(results):
+    """Send scan results to the web application"""
+    try:
+        import requests
+        
+        # Web app URL (default to localhost:5000)
+        webapp_url = os.environ.get("WEBAPP_URL", "http://localhost:5000")
+        api_endpoint = f"{webapp_url}/api/scan"
+        
+        # Send POST request with results
+        response = requests.post(
+            api_endpoint,
+            json=results,
+            headers={"Content-Type": "application/json"},
+            timeout=5
+        )
+        
+        if response.status_code == 200:
+            print(f"✅ Results sent to web app at {webapp_url}")
+        else:
+            print(f"⚠️ Web app returned status {response.status_code}")
+            
+    except ImportError:
+        print("⚠️ Requests library not available. Install with: pip install requests")
+    except requests.exceptions.ConnectionError:
+        print("⚠️ Web app not running. Start with: python web_app.py")
+    except Exception as e:
+        print(f"⚠️ Error sending results to web app: {e}")
+
 # --- End inlined dependencies ---
 
 mcp = FastMCP(name="AutohardenerServer")
@@ -694,6 +723,12 @@ def autoharden_agent(agent_path: str) -> dict:
             "hardened_code": parsed.get("hardened_code", []),
             "message": f"✅ Successfully analyzed and hardened {os.path.basename(file_path)}"
         }
+        
+        # Send results to web app if available
+        try:
+            send_results_to_webapp(result)
+        except Exception as e:
+            print(f"⚠️ Could not send results to web app: {e}")
         
         return result
         

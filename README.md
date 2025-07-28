@@ -12,6 +12,8 @@ A Model Context Protocol (MCP) server that automatically analyzes and hardens AI
 - **Risk Categorization**: Classifies risks as Critical, Medium, or Low severity
 - **YAML Integration**: Injects security guardrails into agent card files
 - **Threat Intelligence**: Incorporates OWASP Top 10 and other security frameworks
+- **Web Dashboard**: Beautiful web interface to view scan results and history
+- **Real-time Updates**: Automatic refresh of scan results in the dashboard
 
 ## 📋 Prerequisites
 
@@ -57,13 +59,35 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 
 ## 🚀 Usage
 
-### Running the MCP Server
+### Option 1: Run Everything Together (Recommended)
+
+Use the dashboard runner to start both the MCP server and web interface:
+
+```bash
+python run_dashboard.py
+```
+
+This will start:
+- **Web Dashboard** at http://localhost:5000
+- **MCP Server** ready for connections
+
+### Option 2: Run Services Separately
+
+#### Running the MCP Server Only
 
 ```bash
 python server.py
 ```
 
 The server will start and be ready to accept MCP connections.
+
+#### Running the Web Dashboard Only
+
+```bash
+python web_app.py
+```
+
+The web dashboard will be available at http://localhost:5000
 
 ### Using with MCP Clients
 
@@ -152,6 +176,7 @@ security:
 
 ## 📊 Example Output
 
+### Terminal Output
 ```
 🔍 Starting security analysis of: /path/to/agent
 📊 Phase 1: Static pattern detection...
@@ -168,6 +193,7 @@ security:
    3 files need security annotations
 ✅ Annotated 2 risks in agent.py
 ✅ Annotated 1 risks in utils.py
+✅ Results sent to web app at http://localhost:5000
 
 📋 Security Analysis Summary:
    Total risks identified: 8
@@ -176,6 +202,14 @@ security:
    ℹ️ Low: 2
 ✅ Security analysis complete!
 ```
+
+### Web Dashboard
+The web dashboard provides a beautiful interface to view:
+- **Real-time scan results** with severity indicators
+- **Scan history** with detailed views
+- **Security constraints and risks** with color-coded severity
+- **Code recommendations** with syntax highlighting
+- **Summary statistics** and metrics
 
 ## 🛡️ Security Features
 
