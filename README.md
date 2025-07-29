@@ -91,13 +91,13 @@ The web dashboard will be available at http://localhost:5001
 
 ### 🖥️ Frontend Web Dashboard
 
-The web dashboard provides a beautiful, real-time interface to view your security scan results:
+The MCP Scanner includes a modern React-based web dashboard for viewing scan results in real-time.
 
 #### Quick Start
 
-1. **Start the web dashboard:**
+1. **Start the modern dashboard:**
    ```bash
-   python3 web_app.py
+   python3 run_modern_dashboard.py
    ```
 
 2. **Open your browser:**
@@ -113,12 +113,21 @@ The web dashboard provides a beautiful, real-time interface to view your securit
 
 #### Dashboard Features
 
+- **🎨 Modern React UI**: Beautiful, responsive design matching the aegent/dev style
+- **🌙 Dark/Light Mode**: Toggle between themes with the moon/sun icon
 - **📊 Real-time Updates**: Automatically refreshes every 5 seconds
-- **🎨 Modern UI**: Beautiful gradient design with Tailwind CSS
 - **🚨 Severity Indicators**: Color-coded risk levels (Critical/Medium/Low)
 - **📝 Code Highlighting**: Syntax-highlighted security recommendations
 - **📚 Scan History**: Click any scan for detailed view
 - **📈 Summary Cards**: Quick overview of risk counts and statistics
+- **🧭 Navigation**: Full sidebar navigation with all planned features
+
+#### Navigation
+
+The dashboard includes navigation for all planned features:
+- **Overview Analysis**: Dashboard, System Schema, Vulnerability Scan, Attack Monitoring, Threat Intelligence
+- **Attack Vectors**: Data Poisoning, Jailbreaks
+- **Security & Monitoring**: Hardening Tools, Prompt Hardening, Risk Reports, System Monitor
 
 #### Dashboard URLs
 
@@ -135,7 +144,7 @@ The web dashboard provides a beautiful, real-time interface to view your securit
 lsof -ti:5000 | xargs kill -9
 
 # Or use the default port 5001
-python3 web_app.py
+python3 app.py
 ```
 
 **Dashboard not loading:**
@@ -144,7 +153,7 @@ python3 web_app.py
 curl http://localhost:5001/api/results
 
 # Restart the web app
-python3 web_app.py
+python3 app.py
 ```
 
 **No data showing:**
@@ -153,6 +162,17 @@ python3 web_app.py
 curl -X POST http://localhost:5001/api/scan \
   -H "Content-Type: application/json" \
   -d '{"success":true,"message":"Test scan","constraints":[],"risks":[]}'
+```
+
+**Build errors:**
+```bash
+# Ensure Node.js and npm are installed
+node --version
+npm --version
+
+# Install dependencies manually if needed
+npm install
+npm run build
 ```
 
 ### Using with MCP Clients

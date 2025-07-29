@@ -655,7 +655,7 @@ def send_results_to_webapp(results):
     except ImportError:
         print("⚠️ Requests library not available. Install with: pip install requests")
     except requests.exceptions.ConnectionError:
-        print("⚠️ Web app not running. Start with: python web_app.py")
+        print("⚠️ Web app not running. Start with: python app.py")
     except Exception as e:
         print(f"⚠️ Error sending results to web app: {e}")
 
