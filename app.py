@@ -32,7 +32,7 @@ def send_results_to_webapp(results):
         if len(scan_history) > 10:
             scan_history.pop(0)
             
-        print(f"✅ Results stored in web app")
+        print(f"Results stored in web app")
         
     except Exception as e:
         print(f"⚠️ Error storing results in web app: {e}")
@@ -65,7 +65,7 @@ def receive_scan_results():
         if len(scan_history) > 10:
             scan_history.pop(0)
             
-        print(f"✅ Received scan results: {data.get('file_path', 'Unknown file')}")
+        print(f"Received scan results: {data.get('file_path', 'Unknown file')}")
         return jsonify({"status": "success", "message": "Results received"})
         
     except Exception as e:
@@ -92,8 +92,17 @@ def clear_results():
 
 @app.route('/<path:path>')
 def serve_static(path):
-    """Serve static files for React app"""
-    return send_from_directory('dist', path)
+    """Serve static files for React app or fallback to index.html for React routing"""
+    # Check if the path is for a static asset (has a file extension)
+    if '.' in path and not path.startswith('api/'):
+        try:
+            return send_from_directory('dist', path)
+        except:
+            pass
+    
+    # For all other routes, serve the React app (index.html)
+    # This allows React Router to handle client-side routing
+    return send_from_directory('dist', 'index.html')
 
 if __name__ == '__main__':
     # Create dist directory if it doesn't exist
@@ -103,4 +112,4 @@ if __name__ == '__main__':
     print("📊 Dashboard will be available at: http://localhost:5001")
     print("📡 API endpoint for results: http://localhost:5001/api/scan")
     
-    app.run(debug=True, host='0.0.0.0', port=5001) 
+    app.run(debug=False, host='0.0.0.0', port=5001) 

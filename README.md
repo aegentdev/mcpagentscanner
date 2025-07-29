@@ -12,12 +12,15 @@ A Model Context Protocol (MCP) server that automatically analyzes and hardens AI
 - **Risk Categorization**: Classifies risks as Critical, Medium, or Low severity
 - **YAML Integration**: Injects security guardrails into agent card files
 - **Threat Intelligence**: Incorporates OWASP Top 10 and other security frameworks
-- **Web Dashboard**: Beautiful web interface to view scan results and history
-- **Real-time Updates**: Automatic refresh of scan results in the dashboard
+- **Modern Web Dashboard**: Beautiful React-based interface with real-time updates
+- **Multi-Project Support**: Switch between different multi-agent projects
+- **Interactive Scan History**: Click any scan for detailed analysis view
+- **Responsive Design**: Optimized for desktop and mobile viewing
 
 ## 📋 Prerequisites
 
 - Python 3.8+
+- Node.js 16+ (for frontend)
 - Google Gemini API key
 - FastMCP framework
 
@@ -33,13 +36,18 @@ cd mcpagentscanner
 ### 2. Install Dependencies
 
 ```bash
+# Install Python dependencies
 pip install -r requirements.txt
+
+# Install Node.js dependencies
+npm install
 ```
 
 Or install manually:
 
 ```bash
 pip install fastmcp sentence-transformers faiss-cpu google-genai python-dotenv pyyaml
+npm install react react-dom @types/react @types/react-dom vite @vitejs/plugin-react typescript
 ```
 
 ### 3. Set Up Environment Variables
@@ -59,7 +67,19 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 
 ## 🚀 Usage
 
-### Option 1: Run Everything Together (Recommended)
+### Quick Start (Recommended)
+
+```bash
+# Build the frontend
+npm run build
+
+# Start the application
+python3 app.py
+```
+
+Visit http://localhost:5001 to access the dashboard.
+
+### Option 1: Run Everything Together
 
 Use the dashboard runner to start both the MCP server and web interface:
 
@@ -89,45 +109,46 @@ python3 web_app.py
 
 The web dashboard will be available at http://localhost:5001
 
-### 🖥️ Frontend Web Dashboard
+### 🖥️ Modern Web Dashboard
 
-The MCP Scanner includes a modern React-based web dashboard for viewing scan results in real-time.
-
-#### Quick Start
-
-1. **Start the modern dashboard:**
-   ```bash
-   python3 run_modern_dashboard.py
-   ```
-
-2. **Open your browser:**
-   ```
-   http://localhost:5001
-   ```
-
-3. **View your results:**
-   - Latest scan results with severity indicators
-   - Complete scan history
-   - Detailed security analysis
-   - Code recommendations with syntax highlighting
+The MCP Scanner includes a modern React-based web dashboard with advanced features.
 
 #### Dashboard Features
 
-- **🎨 Modern React UI**: Beautiful, responsive design matching the aegent/dev style
+- **🎨 Modern React UI**: Beautiful, responsive design with Tailwind CSS
 - **🌙 Dark/Light Mode**: Toggle between themes with the moon/sun icon
 - **📊 Real-time Updates**: Automatically refreshes every 5 seconds
 - **🚨 Severity Indicators**: Color-coded risk levels (Critical/Medium/Low)
 - **📝 Code Highlighting**: Syntax-highlighted security recommendations
-- **📚 Scan History**: Click any scan for detailed view
+- **📚 Interactive Scan History**: Click any scan for detailed modal view
 - **📈 Summary Cards**: Quick overview of risk counts and statistics
-- **🧭 Navigation**: Full sidebar navigation with all planned features
+- **🧭 Full Navigation**: Complete sidebar navigation with all features
+- **📁 Multi-Project Support**: Switch between different multi-agent projects
+- **🔍 Detailed Analysis**: Modal popups for comprehensive scan details
 
-#### Navigation
+#### Multi-Agent Projects
 
-The dashboard includes navigation for all planned features:
-- **Overview Analysis**: Dashboard, System Schema, Vulnerability Scan, Attack Monitoring, Threat Intelligence
-- **Attack Vectors**: Data Poisoning, Jailbreaks
-- **Security & Monitoring**: Hardening Tools, Prompt Hardening, Risk Reports, System Monitor
+The dashboard includes a diverse set of multi-agent projects:
+
+**Finance & Trading:**
+- **Quantum Traders** - Multi-agent quantum trading system
+- **Financial Advisor** - Investment portfolio optimization
+
+**Science & Research:**
+- **Bio Research Lab** - AI agents for drug discovery
+- **Space Explorer** - Autonomous space mission planning
+- **Climate Predictor** - Environmental modeling agents
+
+**Technology & Security:**
+- **Cyber Sentinel** - Advanced threat detection network
+
+**Creative & Entertainment:**
+- **Creative Studio** - AI-powered content generation
+- **Game Developer** - Procedural game world generation
+
+**Infrastructure & Healthcare:**
+- **Smart City Hub** - Urban infrastructure management
+- **Medical Diagnosis** - Healthcare diagnostic agents
 
 #### Dashboard URLs
 
@@ -138,13 +159,13 @@ The dashboard includes navigation for all planned features:
 
 #### Troubleshooting the Frontend
 
-**Port 5000 already in use:**
+**Port 5001 already in use:**
 ```bash
-# Kill any process using port 5000
-lsof -ti:5000 | xargs kill -9
+# Kill any process using port 5001
+pkill -f "python3 app.py"
 
-# Or use the default port 5001
-python3 app.py
+# Or use a different port
+python3 app.py --port 5002
 ```
 
 **Dashboard not loading:**
@@ -292,10 +313,11 @@ security:
 ### Web Dashboard
 The web dashboard provides a beautiful interface to view:
 - **Real-time scan results** with severity indicators
-- **Scan history** with detailed views
+- **Interactive scan history** with clickable entries
 - **Security constraints and risks** with color-coded severity
 - **Code recommendations** with syntax highlighting
 - **Summary statistics** and metrics
+- **Multi-project navigation** with diverse agent themes
 
 ## 🛡️ Security Features
 
@@ -358,6 +380,12 @@ Description of the threat and mitigation strategies.
    - Check your Google Gemini API usage
    - Verify your API key permissions
 
+4. **"Port already in use"**
+   ```bash
+   pkill -f "python3 app.py"
+   python3 app.py
+   ```
+
 ### Debug Mode
 
 Add debug logging by modifying the server:
@@ -384,6 +412,7 @@ logging.basicConfig(level=logging.DEBUG)
 - Powered by [Google Gemini](https://ai.google.dev/)
 - Security patterns based on OWASP guidelines
 - Threat intelligence from various security frameworks
+- Modern UI built with React and Tailwind CSS
 
 ## 📞 Support
 

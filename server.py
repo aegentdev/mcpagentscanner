@@ -721,7 +721,7 @@ def autoharden_agent(agent_path: str) -> dict:
             "constraints": constraints,
             "risks": risks,
             "hardened_code": parsed.get("hardened_code", []),
-            "message": f"✅ Successfully analyzed and hardened {os.path.basename(file_path)}"
+            "message": f"Successfully analyzed and hardened {os.path.basename(file_path)}"
         }
         
         # Send results to web app if available

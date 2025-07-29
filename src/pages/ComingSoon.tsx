@@ -1,4 +1,4 @@
-import React from 'react';
+
 import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Construction } from 'lucide-react';
@@ -11,8 +11,8 @@ interface ComingSoonProps {
 const ComingSoon: React.FC<ComingSoonProps> = ({ title, description = "This feature is under development and will be available soon." }) => {
   return (
     <AppLayout>
-      <div className="p-6">
-        <div className="max-w-2xl mx-auto text-center space-y-6">
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full text-center space-y-6">
           <div className="flex justify-center">
             <div className="p-4 bg-primary/10 rounded-full">
               <Construction size={48} className="text-primary" />
@@ -36,15 +36,15 @@ const ComingSoon: React.FC<ComingSoonProps> = ({ title, description = "This feat
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                <div className="flex items-center justify-center gap-3 p-3 bg-muted rounded-lg">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                   <span className="text-sm">Feature development in progress</span>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                <div className="flex items-center justify-center gap-3 p-3 bg-muted rounded-lg">
                   <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
                   <span className="text-sm">Security testing and validation</span>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                <div className="flex items-center justify-center gap-3 p-3 bg-muted rounded-lg">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="text-sm">Final integration and deployment</span>
                 </div>

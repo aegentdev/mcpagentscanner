@@ -1,0 +1,53 @@
+# danger_agent.py
+
+import openai
+import os
+import requests
+
+def classify_task(user_input):
+    if "download" in user_input:
+        return "download"
+    elif "calculate" in user_input:
+        return "math"
+    elif "run code" in user_input:
+        return "exec"
+    else:
+        return "unknown"
+
+class Agent:
+    def __init__(self):
+        self.session = requests.Session()
+
+    def download_file(self, url):
+        response = self.session.get(url)
+        # 🚨 Sanitize file paths and restrict download destinations
+        with open("output.txt", "w") as f:
+        # 💡 Suggested fix: validate filename or use tempfile.NamedTemporaryFile()
+            f.write(response.text)
+        return "Downloaded to output.txt"
+
+    def unsafe_code_execution(self, code):
+        # 🚨 Avoid exec: use safe function mappings or sandboxes
+        exec(code)
+        # 💡 Suggested fix: use a dispatch table or whitelist of actions
+        return "Code executed"
+
+    def calculate(self, expr):
+        return eval(expr)
+        # 💡 Suggested fix: return ast.literal_eval(expr)
+
+    def route(self, user_input):
+        task = classify_task(user_input)
+        if task == "download":
+            url = user_input.split()[-1]
+            return self.download_file(url)
+        elif task == "math":
+            expr = user_input.replace("calculate", "").strip()
+            return self.calculate(expr)
+        elif task == "exec":
+            code = user_input.split(":", 1)[-1]
+            return self.unsafe_code_execution(code)
+        else:
+            return "Task not recognized"
+
+

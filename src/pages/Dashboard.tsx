@@ -1,16 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import SystemMetrics from '@/components/dashboard/SystemMetrics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
 
-interface SystemOverview {
-  compromised: number;
-  avgRiskScore: number;
-  connectivity: number;
-  highRiskCount: number;
-}
+
 
 interface ScanResult {
   success: boolean;
@@ -22,19 +17,25 @@ interface ScanResult {
   hardened_code?: string[];
   message?: string;
   error?: string;
+  timestamp?: string;
+  scan_id?: number;
 }
 
 const Dashboard = () => {
-  const [systemOverview] = useState<SystemOverview>({
-    compromised: 0,
-    avgRiskScore: 6.7,
-    connectivity: 33,
-    highRiskCount: 2
-  });
-
   const [scanResults, setScanResults] = useState<ScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedScan, setSelectedScan] = useState<ScanResult | null>(null);
+
+  // Update system overview based on scan results
+  const updatedSystemOverview = {
+    compromised: scanResults?.success ? 0 : 1,
+    avgRiskScore: scanResults?.risks?.length ? 
+      Math.round((scanResults.risks.filter((r: any) => r.severity === 'critical').length * 10 + 
+                  scanResults.risks.filter((r: any) => r.severity === 'medium').length * 5) / scanResults.risks.length) : 0,
+    connectivity: scanHistory.length * 10,
+    highRiskCount: scanResults?.risks?.filter((r: any) => r.severity === 'critical').length || 0
+  };
 
   // Fetch scan results from the Flask backend
   const fetchScanResults = async () => {
@@ -67,6 +68,16 @@ const Dashboard = () => {
     setIsLoading(false);
   };
 
+  // Handle scan selection
+  const handleScanClick = (scan: any) => {
+    setSelectedScan(scan);
+  };
+
+  // Close selected scan
+  const closeSelectedScan = () => {
+    setSelectedScan(null);
+  };
+
   useEffect(() => {
     fetchScanResults();
     fetchScanHistory();
@@ -80,48 +91,29 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const activityItems = [
-    {
-      type: 'warning',
-      title: 'Unusual prompt pattern detected',
-      description: 'LLM Agent received potentially malicious prompt pattern',
-      time: '10 minutes ago'
-    },
+  const activityItems = scanHistory.length > 0 ? scanHistory.slice(0, 4).map((scan) => ({
+    type: scan.success ? 'success' : 'error',
+    title: scan.success ? 'Security scan completed' : 'Security scan failed',
+    description: scan.file_path ? `Analyzed ${scan.file_path.split('/').pop()}` : 'Unknown file',
+    time: scan.timestamp ? new Date(scan.timestamp).toLocaleString() : 'Unknown time'
+  })) : [
     {
       type: 'info',
-      title: 'System scan completed',
-      description: 'Full system vulnerability scan completed successfully',
-      time: '1 hour ago'
-    },
-    {
-      type: 'error',
-      title: 'Prompt injection attempt',
-      description: 'Blocked attempt to inject malicious prompt into LLM Agent',
-      time: '3 hours ago'
-    },
-    {
-      type: 'success',
-      title: 'Guardrails updated',
-      description: 'System guardrails updated with latest security patterns',
-      time: '1 day ago'
+      title: 'No scans yet',
+      description: 'Run your first security scan to see activity here',
+      time: 'No activity'
     }
   ];
 
-  const riskItems = [
+  const riskItems = scanResults?.risks?.slice(0, 3).map((risk: any) => ({
+    title: risk.description,
+    description: risk.impact || 'Security risk detected',
+    severity: risk.severity
+  })) || [
     {
-      severity: 'high',
-      title: 'LLM Agent Prompt Vulnerability',
-      description: 'High autonomy settings create risk of prompt manipulation'
-    },
-    {
-      severity: 'medium',
-      title: 'Executor Tool Access',
-      description: 'Executor has elevated access to system tools'
-    },
-    {
-      severity: 'low',
-      title: 'Planner Memory Usage',
-      description: 'Memory allocation for Planner agent may lead to information leakage'
+      title: 'No risks detected',
+      description: 'Run a security scan to identify potential risks',
+      severity: 'low'
     }
   ];
 
@@ -134,14 +126,7 @@ const Dashboard = () => {
     }
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'warning': return <AlertTriangle size={16} />;
-      case 'error': return <AlertTriangle size={16} />;
-      case 'success': return <CheckCircle size={16} />;
-      default: return <Info size={16} />;
-    }
-  };
+
 
   const getRiskSeverityColor = (severity: string) => {
     switch (severity) {
@@ -154,7 +139,7 @@ const Dashboard = () => {
   };
 
   return (
-    <AppLayout>
+    <AppLayout latestScanTime={scanResults?.timestamp || scanHistory[0]?.timestamp}>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-2">
@@ -173,7 +158,7 @@ const Dashboard = () => {
           </button>
         </div>
         
-        <SystemMetrics data={systemOverview} />
+        <SystemMetrics data={updatedSystemOverview} />
         
         <Tabs defaultValue="recent-activity">
           <TabsList className="grid w-full md:w-[400px] grid-cols-2">
@@ -181,33 +166,8 @@ const Dashboard = () => {
             <TabsTrigger value="risk-summary">Risk Summary</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="recent-activity" className="mt-4 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>
-                  Latest security events and system changes
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {activityItems.map((item, index) => (
-                    <div key={index} className="flex items-start gap-4 pb-4 border-b last:border-0 last:pb-0">
-                      <div className={`w-2 h-2 mt-2 rounded-full ${getActivityTypeColor(item.type)}`} />
-                      <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
-                          <p className="font-medium">{item.title}</p>
-                          <span className="text-xs text-muted-foreground">{item.time}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
           
+
           <TabsContent value="risk-summary" className="mt-4 space-y-4">
             <Card>
               <CardHeader>
@@ -233,11 +193,14 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
 
-        {/* MCP Scanner Results */}
+        {/* Latest Scan Results */}
         {scanResults && (
           <Card>
             <CardHeader>
-              <CardTitle>MCP Scanner Results</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <RefreshCw size={16} />
+                Latest Scan Results
+              </CardTitle>
               <CardDescription>
                 Latest security analysis from the MCP server
               </CardDescription>
@@ -246,55 +209,86 @@ const Dashboard = () => {
               <div className="space-y-4">
                 {scanResults.success ? (
                   <>
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle size={16} />
-                      <span className="font-medium">Scan completed successfully</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-green-600">
+                        <CheckCircle size={16} />
+                        <span className="font-medium">{scanResults.message || 'Scan completed successfully'}</span>
+                      </div>
+                      {scanResults.timestamp && (
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(scanResults.timestamp).toLocaleString()}
+                        </span>
+                      )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div className="p-4 bg-blue-50 rounded-lg">
                         <p className="text-sm font-medium text-blue-800">File Analyzed</p>
-                        <p className="text-xs text-blue-600 mt-1">{scanResults.file_path}</p>
-                      </div>
-                      <div className="p-4 bg-yellow-50 rounded-lg">
-                        <p className="text-sm font-medium text-yellow-800">Constraints Found</p>
-                        <p className="text-2xl font-bold text-yellow-600">{scanResults.constraints_count}</p>
+                        <p className="text-xs text-blue-600 mt-1 truncate">{scanResults.file_path}</p>
                       </div>
                       <div className="p-4 bg-red-50 rounded-lg">
-                        <p className="text-sm font-medium text-red-800">Risks Identified</p>
-                        <p className="text-2xl font-bold text-red-600">{scanResults.risks_count}</p>
+                        <p className="text-sm font-medium text-red-800">Critical</p>
+                        <p className="text-2xl font-bold text-red-600">
+                          {scanResults.risks?.filter((r: any) => r.severity === 'critical').length || 0}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-yellow-50 rounded-lg">
+                        <p className="text-sm font-medium text-yellow-800">Medium</p>
+                        <p className="text-2xl font-bold text-yellow-600">
+                          {scanResults.risks?.filter((r: any) => r.severity === 'medium').length || 0}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <p className="text-sm font-medium text-green-800">Suggestions</p>
+                        <p className="text-2xl font-bold text-green-600">{scanResults.constraints_count || 0}</p>
                       </div>
                     </div>
-                    {scanResults.constraints && scanResults.constraints.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">Security Constraints:</h4>
-                        <ul className="space-y-2">
-                          {scanResults.constraints.map((constraint: any, index: number) => (
-                            <li key={index} className="text-sm p-2 bg-muted rounded">
-                              {constraint.description}
-                            </li>
-                          ))}
-                        </ul>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Left column - Security Constraints and Risks */}
+                      <div className="space-y-6">
+                        {scanResults.constraints && scanResults.constraints.length > 0 && (
+                          <div>
+                            <h4 className="font-medium mb-2">Security Constraints:</h4>
+                            <ul className="space-y-2">
+                              {scanResults.constraints.map((constraint: any, index: number) => (
+                                <li key={index} className="text-sm p-2 bg-muted rounded">
+                                  {constraint.description}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {scanResults.risks && scanResults.risks.length > 0 && (
+                          <div>
+                            <h4 className="font-medium mb-2">Security Risks:</h4>
+                            <ul className="space-y-2">
+                              {scanResults.risks.map((risk: any, index: number) => (
+                                <li key={index} className="text-sm p-2 bg-red-50 rounded border border-red-200">
+                                  <span className={`inline-block px-2 py-1 text-xs rounded-full mr-2 ${
+                                    risk.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                                    risk.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-green-100 text-green-800'
+                                  }`}>
+                                    {risk.severity}
+                                  </span>
+                                  {risk.description}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {scanResults.risks && scanResults.risks.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">Security Risks:</h4>
-                        <ul className="space-y-2">
-                          {scanResults.risks.map((risk: any, index: number) => (
-                            <li key={index} className="text-sm p-2 bg-red-50 rounded border border-red-200">
-                              <span className={`inline-block px-2 py-1 text-xs rounded-full mr-2 ${
-                                risk.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                                risk.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-green-100 text-green-800'
-                              }`}>
-                                {risk.severity}
-                              </span>
-                              {risk.description}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                      
+                      {/* Right column - Security Recommendations */}
+                      {scanResults.hardened_code && scanResults.hardened_code.length > 0 && (
+                        <div className="h-full flex flex-col">
+                          <h4 className="font-medium mb-2">Security Recommendations:</h4>
+                          <div className="bg-gray-900 text-green-400 p-3 border rounded-md font-mono text-xs overflow-y-auto" style={{ height: '400px' }}>
+                            <pre className="whitespace-pre-wrap">{scanResults.hardened_code.join('\n')}</pre>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <div className="flex items-center gap-2 text-red-600">
@@ -311,31 +305,190 @@ const Dashboard = () => {
         {scanHistory.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Scan History</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <RefreshCw size={16} />
+                Scan History
+              </CardTitle>
               <CardDescription>
                 Previous security scans and their results
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {scanHistory.map((scan, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div>
-                      <p className="font-medium">{scan.file_path || 'Unknown file'}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {scan.constraints_count} constraints, {scan.risks_count} risks
-                      </p>
+                  <div 
+                    key={index} 
+                    className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleScanClick(scan)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm truncate">
+                          {scan.file_path ? scan.file_path.split('/').pop() : 'Unknown file'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {scan.timestamp ? new Date(scan.timestamp).toLocaleString() : 'No timestamp'}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 text-xs rounded-full ml-2 ${
+                        scan.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {scan.success ? 'Success' : 'Failed'}
+                      </span>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      scan.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {scan.success ? 'Success' : 'Failed'}
-                    </span>
+                    
+                    <div className="flex gap-2 mt-3">
+                      {scan.risks_count && scan.risks_count > 0 && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+                          {scan.risks_count} Critical
+                        </span>
+                      )}
+                      {scan.constraints_count && scan.constraints_count > 0 && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                          {scan.constraints_count} Medium
+                        </span>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {scan.message || 'Scan completed'}
+                    </p>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Selected Scan Details Modal */}
+        {selectedScan && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold">Scan Details</h2>
+                  <button
+                    onClick={closeSelectedScan}
+                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Scan Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {selectedScan.success ? (
+                        <CheckCircle size={16} className="text-green-600" />
+                      ) : (
+                        <AlertTriangle size={16} className="text-red-600" />
+                      )}
+                      <span className="font-medium">
+                        {selectedScan.success ? 'Scan completed successfully' : 'Scan failed'}
+                      </span>
+                    </div>
+                    {selectedScan.timestamp && (
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(selectedScan.timestamp).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* File Path */}
+                  {selectedScan.file_path && (
+                    <div className="p-3 bg-gray-50 rounded">
+                      <p className="text-sm font-medium">File Analyzed:</p>
+                      <p className="text-sm text-muted-foreground">{selectedScan.file_path}</p>
+                    </div>
+                  )}
+
+                  {/* Risk Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-red-50 rounded-lg">
+                      <p className="text-sm font-medium text-red-800">Critical</p>
+                      <p className="text-2xl font-bold text-red-600">
+                        {selectedScan.risks?.filter((r: any) => r.severity === 'critical').length || 0}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-yellow-50 rounded-lg">
+                      <p className="text-sm font-medium text-yellow-800">Medium</p>
+                      <p className="text-2xl font-bold text-yellow-600">
+                        {selectedScan.risks?.filter((r: any) => r.severity === 'medium').length || 0}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <p className="text-sm font-medium text-green-800">Suggestions</p>
+                      <p className="text-2xl font-bold text-green-600">{selectedScan.constraints_count || 0}</p>
+                    </div>
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm font-medium text-blue-800">Total Risks</p>
+                      <p className="text-2xl font-bold text-blue-600">{selectedScan.risks_count || 0}</p>
+                    </div>
+                  </div>
+
+                  {/* Detailed Results */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Left column - Security Constraints and Risks */}
+                    <div className="space-y-6">
+                      {selectedScan.constraints && selectedScan.constraints.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-2">Security Constraints:</h4>
+                          <ul className="space-y-2">
+                            {selectedScan.constraints.map((constraint: any, index: number) => (
+                              <li key={index} className="text-sm p-2 bg-muted rounded">
+                                {constraint.description}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {selectedScan.risks && selectedScan.risks.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-2">Security Risks:</h4>
+                          <ul className="space-y-2">
+                            {selectedScan.risks.map((risk: any, index: number) => (
+                              <li key={index} className="text-sm p-2 bg-red-50 rounded border border-red-200">
+                                <span className={`inline-block px-2 py-1 text-xs rounded-full mr-2 ${
+                                  risk.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                                  risk.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-green-100 text-green-800'
+                                }`}>
+                                  {risk.severity}
+                                </span>
+                                {risk.description}
+                                {risk.impact && (
+                                  <p className="text-xs text-muted-foreground mt-1">Impact: {risk.impact}</p>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Right column - Security Recommendations */}
+                    {selectedScan.hardened_code && selectedScan.hardened_code.length > 0 && (
+                      <div className="h-full flex flex-col">
+                        <h4 className="font-medium mb-2">Security Recommendations:</h4>
+                        <div className="bg-gray-900 text-green-400 p-3 border rounded-md font-mono text-xs overflow-y-auto" style={{ height: '400px' }}>
+                          <pre className="whitespace-pre-wrap">{selectedScan.hardened_code.join('\n')}</pre>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Error Message */}
+                  {selectedScan.error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded">
+                      <p className="text-sm font-medium text-red-800">Error:</p>
+                      <p className="text-sm text-red-600">{selectedScan.error}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </AppLayout>

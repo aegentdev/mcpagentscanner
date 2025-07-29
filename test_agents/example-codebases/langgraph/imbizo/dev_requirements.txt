@@ -1,0 +1,22 @@
+tox
+pytest
+pytest-cov
+pytest-mock
+black
+flake8
+isort
+autoflake
+mypy
+safety
+sphinx
+wheel
+twine
+build
+pickleshare
+coverage
+
+# agents
+langchain-openai
+langgraph
+langchain
+pygraphviz

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Activity, 
@@ -9,25 +9,44 @@ import {
   Wrench, 
   FileText, 
   BarChart3,
-  Moon,
-  Sun,
   Menu,
-  X
+  X,
+  ChevronDown,
+  Folder
 } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  latestScanTime?: string;
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+const AppLayout: React.FC<AppLayoutProps> = ({ children, latestScanTime }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isProjectsDropdownOpen, setIsProjectsDropdownOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState('Quantum Traders');
   const location = useLocation();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
-  };
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProjectsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  interface NavigationItem {
+    name: string;
+    href: string;
+    icon: any;
+    tag?: string;
+  }
 
   const navigation = [
     {
@@ -38,14 +57,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         { name: "Vulnerability Scan", href: "/vulnerability-scan", icon: Search },
         { name: "Attack Monitoring", href: "/attack-monitoring", icon: Eye },
         { name: "Threat Intelligence", href: "/threat-intelligence", icon: Triangle },
-      ]
+      ] as NavigationItem[]
     },
     {
       section: "Attack Vectors",
       items: [
         { name: "Data Poisoning", href: "/data-poisoning", icon: Shield, tag: "Medium" },
         { name: "Jailbreaks", href: "/jailbreaks", icon: Shield, tag: "Critical" },
-      ]
+      ] as NavigationItem[]
     },
     {
       section: "Security & Monitoring",
@@ -54,12 +73,25 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         { name: "Prompt Hardening", href: "/prompt-hardening", icon: Shield },
         { name: "Risk Reports", href: "/risk-reports", icon: FileText },
         { name: "System Monitor", href: "/system-monitor", icon: BarChart3 },
-      ]
+      ] as NavigationItem[]
     }
   ];
 
+  const projects = [
+    { id: 'quantum-traders', name: 'Quantum Traders', description: 'Multi-agent quantum trading system' },
+    { id: 'bio-research', name: 'Bio Research Lab', description: 'AI agents for drug discovery' },
+    { id: 'space-explorer', name: 'Space Explorer', description: 'Autonomous space mission planning' },
+    { id: 'climate-predictor', name: 'Climate Predictor', description: 'Environmental modeling agents' },
+    { id: 'cyber-sentinel', name: 'Cyber Sentinel', description: 'Advanced threat detection network' },
+    { id: 'creative-studio', name: 'Creative Studio', description: 'AI-powered content generation' },
+    { id: 'smart-city', name: 'Smart City Hub', description: 'Urban infrastructure management' },
+    { id: 'medical-diagnosis', name: 'Medical Diagnosis', description: 'Healthcare diagnostic agents' },
+    { id: 'financial-advisor', name: 'Financial Advisor', description: 'Investment portfolio optimization' },
+    { id: 'game-developer', name: 'Game Developer', description: 'Procedural game world generation' }
+  ];
+
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
+    <div className="min-h-screen">
       <div className="flex h-screen bg-background">
         {/* Sidebar */}
         <div className={`${isSidebarOpen ? 'w-64' : 'w-16'} bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-in-out`}>
@@ -86,7 +118,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-6">
+            <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
               {navigation.map((section) => (
                 <div key={section.section}>
                   <h3 className={`text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 ${!isSidebarOpen && 'hidden'}`}>
@@ -147,15 +179,77 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <header className="bg-card border-b border-border px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <h1 className="text-2xl font-bold">Dashboard</h1>
-                <p className="text-muted-foreground">Overview of your multi-agent system security status</p>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                  <div>
+                    <p className="text-sm font-medium">Latest Scan</p>
+                    <p className="text-xs text-muted-foreground">
+                      {latestScanTime ? new Date(latestScanTime).toLocaleString() : 'No scans yet'}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-md hover:bg-accent"
-              >
-                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-primary-foreground text-sm font-medium">U</span>
+                  </div>
+                  <div className="hidden md:block">
+                    <p className="text-sm font-medium">Current User</p>
+                    <p className="text-xs text-muted-foreground">user@example.com</p>
+                  </div>
+                </div>
+                
+                {/* Projects Dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsProjectsDropdownOpen(!isProjectsDropdownOpen)}
+                    className="flex items-center space-x-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                  >
+                    <Folder size={16} />
+                    <span className="hidden md:block">{selectedProject}</span>
+                    <ChevronDown size={14} className={`transition-transform ${isProjectsDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {isProjectsDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-md shadow-lg z-50">
+                      <div className="p-2">
+                        <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Projects
+                        </div>
+                        {projects.map((project) => (
+                          <button
+                            key={project.id}
+                            onClick={() => {
+                              setSelectedProject(project.name);
+                              setIsProjectsDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
+                              selectedProject === project.name
+                                ? 'bg-accent text-accent-foreground'
+                                : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                            }`}
+                          >
+                            <div className="font-medium">{project.name}</div>
+                            <div className="text-xs text-muted-foreground">{project.description}</div>
+                          </button>
+                        ))}
+                        <div className="border-t border-border mt-2 pt-2">
+                          <button className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-accent rounded-md transition-colors">
+                            + Create New Project
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <button
+                  className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
           </header>
 

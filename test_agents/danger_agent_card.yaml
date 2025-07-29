@@ -1,0 +1,144 @@
+security:
+  constraints:
+  - description: Agent executes unvalidated user input as code using `exec()` and
+      `eval()`.
+    severity: critical
+  - description: The agent downloads files from any user-provided URL without validation,
+      risking SSRF attacks.
+    severity: medium
+  - description: The agent writes downloaded content to a hardcoded, predictable file
+      path (`output.txt`), risking file overwrites or DoS.
+    severity: medium
+  - description: The agent's routing logic uses simple keyword matching, making it
+      vulnerable to prompt injection and manipulation.
+    severity: low
+  risks:
+  - description: 'Arbitrary Code Execution via `exec()`: User input is passed directly
+      to `exec()`, allowing an attacker to run any command on the host system.'
+    impact: Complete system compromise, data theft, or installation of malware.
+    severity: critical
+  - description: 'Arbitrary Code Execution via `eval()`: User input is passed to `eval()`,
+      which can execute malicious code just like `exec()`.'
+    impact: Complete system compromise, data theft, or installation of malware.
+    severity: critical
+  - description: 'Server-Side Request Forgery (SSRF): The download function can be
+      used to make requests to internal network resources, potentially exposing sensitive
+      internal services.'
+    impact: Data exfiltration from internal systems or attacks on the internal network.
+    severity: medium
+  - description: 'Insecure File Handling: Writing to a static filename can be abused
+      to overwrite critical files (if permissions allow) or fill up disk space with
+      large downloads.'
+    impact: Denial of service or data corruption.
+    severity: medium
+  suggested_guardrails:
+  - '# Hardened code with secure replacements for vulnerable functions.'
+  - '# This code replaces exec() and eval() with safe alternatives, validates URLs
+    to prevent SSRF,'
+  - '# and uses temporary files for secure file handling.'
+  - import ast
+  - import os
+  - import requests
+  - import tempfile
+  - import socket
+  - from urllib.parse import urlparse
+  - ''
+  - '# Whitelist of allowed domains for downloads for security'
+  - ALLOWED_DOWNLOAD_DOMAINS = {
+  - '    ''example.com'', ''trusted-source.org'''
+  - '}'
+  - ''
+  - '# Whitelist of allowed AST nodes for safe math evaluation'
+  - ALLOWED_MATH_OPS = {
+  - '    ast.Add: lambda a, b: a + b,'
+  - '    ast.Sub: lambda a, b: a - b,'
+  - '    ast.Mult: lambda a, b: a * b,'
+  - '    ast.Div: lambda a, b: a / b'
+  - '}'
+  - ''
+  - 'def _safe_eval_math_node(node):'
+  - '    # Recursively evaluate AST nodes for a math expression, ensuring safety'
+  - '    if isinstance(node, ast.Num):'
+  - '        return node.n'
+  - '    elif isinstance(node, ast.BinOp) and type(node.op) in ALLOWED_MATH_OPS:'
+  - '        left = _safe_eval_math_node(node.left)'
+  - '        right = _safe_eval_math_node(node.right)'
+  - '        return ALLOWED_MATH_OPS[type(node.op)](left, right)'
+  - '    else:'
+  - '        raise ValueError(f"Disallowed operation or node type: {type(node).__name__}")'
+  - ''
+  - 'def is_safe_url(url):'
+  - '    # Validates a URL against a domain whitelist and checks for private IP addresses
+    (SSRF protection)'
+  - '    try:'
+  - '        parsed_url = urlparse(url)'
+  - '        if parsed_url.scheme not in [''http'', ''https'']: return False'
+  - '        if parsed_url.hostname not in ALLOWED_DOWNLOAD_DOMAINS: return False'
+  - '        ip_address = socket.gethostbyname(parsed_url.hostname)'
+  - '        if socket.inet_aton(ip_address).is_private: return False'
+  - '        return True'
+  - '    except (ValueError, socket.gaierror):'
+  - '        return False'
+  - ''
+  - 'class Agent:'
+  - '    def __init__(self):'
+  - '        self.session = requests.Session()'
+  - '        # Create a secure, temporary directory for any agent outputs'
+  - '        self.secure_output_dir = tempfile.mkdtemp()'
+  - ''
+  - '    def download_file(self, url):'
+  - '        # Replaces insecure download with a hardened version that validates URLs
+    and uses temporary files'
+  - '        if not is_safe_url(url):'
+  - '            return "Download failed: URL is not allowed or is unsafe."'
+  - '        try:'
+  - '            # Use a temporary file for secure, non-conflicting file creation'
+  - '            with tempfile.NamedTemporaryFile(dir=self.secure_output_dir, delete=False,
+    mode=''w'', encoding=''utf-8'') as temp_f:'
+  - '                response = self.session.get(url, stream=True, timeout=10)'
+  - '                response.raise_for_status()'
+  - '                temp_f.write(response.text)'
+  - '                return f"Downloaded to secure file: {temp_f.name}"'
+  - '        except requests.exceptions.RequestException as e:'
+  - '            return f"Error downloading file: {e}"'
+  - ''
+  - '    def safe_code_execution(self, code):'
+  - '        # Replaces dangerous exec() call by explicitly disabling arbitrary code
+    execution'
+  - '        return "Error: Arbitrary code execution is disabled for security reasons."'
+  - ''
+  - '    def calculate(self, expr):'
+  - '        # Replaces dangerous eval() with a safe math expression evaluator using
+    an AST traversal'
+  - '        try:'
+  - '            tree = ast.parse(expr, mode=''eval'').body'
+  - '            result = _safe_eval_math_node(tree)'
+  - '            return result'
+  - '        except (ValueError, SyntaxError, TypeError, ZeroDivisionError) as e:'
+  - '            return f"Error: Invalid or unsafe expression. {e}"'
+  - ''
+  - '    def route(self, user_input):'
+  - '        # NOTE: This classification logic is still basic and should be improved'
+  - '        task = classify_task(user_input)'
+  - '        if task == "download":'
+  - '            url = user_input.split()[-1]'
+  - '            return self.download_file(url)'
+  - '        elif task == "math":'
+  - '            expr = user_input.replace("calculate", "").strip()'
+  - '            return self.calculate(expr)'
+  - '        elif task == "exec":'
+  - '            code = user_input.split(":", 1)[-1]'
+  - '            return self.safe_code_execution(code)'
+  - '        else:'
+  - '            return "Task not recognized"'
+  - ''
+  - '# Original classify_task function (unchanged)'
+  - 'def classify_task(user_input):'
+  - '    if "download" in user_input:'
+  - '        return "download"'
+  - '    elif "calculate" in user_input:'
+  - '        return "math"'
+  - '    elif "run code" in user_input:'
+  - '        return "exec"'
+  - '    else:'
+  - '        return "unknown"'
