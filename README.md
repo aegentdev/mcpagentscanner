@@ -67,6 +67,36 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 
 ## 🚀 Usage
 
+### Using with MCP Clients
+
+#### With Claude Desktop
+
+Add the server to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "autohardener": {
+      "command": "python",
+      "args": ["/path/to/your/mcpagentscanner/server.py"],
+      "env": {
+        "GOOGLE_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+1. Restart Claude Desktop
+2. Use the `autoharden_agent` tool to analyze your AI agents
+
+#### With Other MCP Clients
+
+The server provides two tools:
+
+- **`autoharden_agent(agent_path: str)`**: Main security analysis tool
+- **`ping_pong(random_string: str)`**: Health check tool
+
 ### Quick Start (Recommended)
 
 ```bash

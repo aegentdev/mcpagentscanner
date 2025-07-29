@@ -45,8 +45,8 @@ def main():
         print("❌ server.py not found!")
         return 1
     
-    if not Path("web_app.py").exists():
-        print("❌ web_app.py not found!")
+    if not Path("app.py").exists():
+        print("❌ app.py not found!")
         return 1
     
     # Check if .env file exists
@@ -62,7 +62,7 @@ def main():
     print()
     
     # Start web app in background
-    web_process = run_command("python3 web_app.py", "Web Dashboard")
+    web_process = run_command("python3 app.py", "Web Dashboard")
     if not web_process:
         return 1
     
