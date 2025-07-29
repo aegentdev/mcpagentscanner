@@ -1,5 +1,5 @@
 # MCP Agent Scanner - AutoHardener 
-
+ 
 🔒 **AI Agent Security Hardening Tool**
 
 A Model Context Protocol (MCP) server that automatically analyzes and hardens AI agents with security guardrails. This tool combines static code analysis with AI-powered security recommendations to identify vulnerabilities and suggest mitigations.
