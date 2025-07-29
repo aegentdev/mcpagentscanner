@@ -8,14 +8,17 @@ A Model Context Protocol (MCP) server that automatically analyzes and hardens AI
 
 - **Static Security Analysis**: Detects common security patterns in Python code
 - **AI-Powered Recommendations**: Uses Google Gemini to identify agent-specific vulnerabilities
-- **Automatic Code Annotation**: Adds security comments directly to your code
 - **Risk Categorization**: Classifies risks as Critical, Medium, or Low severity
-- **YAML Integration**: Injects security guardrails into agent card files
-- **Threat Intelligence**: Incorporates OWASP Top 10 and other security frameworks
 - **Modern Web Dashboard**: Beautiful React-based interface with real-time updates
-- **Multi-Project Support**: Switch between different multi-agent projects
 - **Interactive Scan History**: Click any scan for detailed analysis view
 - **Responsive Design**: Optimized for desktop and mobile viewing
+
+### 🔧 Core Security Features
+
+- **Code Pattern Detection**: Identifies dangerous functions like `eval()`, `exec()`, `subprocess.call()`
+- **AI Analysis**: Uses Google Gemini to analyze agent architecture and identify vulnerabilities
+- **Risk Assessment**: Provides detailed risk analysis with severity levels and mitigation suggestions
+- **Real-time Dashboard**: View scan results and history through a modern web interface
 
 ## 📋 Prerequisites
 
@@ -199,44 +202,25 @@ The web dashboard will be available at http://localhost:5001
 
 ### 🖥️ Modern Web Dashboard
 
-The MCP Scanner includes a modern React-based web dashboard with advanced features.
+The MCP Scanner includes a modern React-based web dashboard for viewing scan results.
 
 #### Dashboard Features
 
 - **🎨 Modern React UI**: Beautiful, responsive design with Tailwind CSS
-- **🌙 Dark/Light Mode**: Toggle between themes with the moon/sun icon
 - **📊 Real-time Updates**: Automatically refreshes every 5 seconds
 - **🚨 Severity Indicators**: Color-coded risk levels (Critical/Medium/Low)
-- **📝 Code Highlighting**: Syntax-highlighted security recommendations
 - **📚 Interactive Scan History**: Click any scan for detailed modal view
 - **📈 Summary Cards**: Quick overview of risk counts and statistics
-- **🧭 Full Navigation**: Complete sidebar navigation with all features
-- **📁 Multi-Project Support**: Switch between different multi-agent projects
+- **🧭 Navigation**: Sidebar navigation with security analysis features
 - **🔍 Detailed Analysis**: Modal popups for comprehensive scan details
 
-#### Multi-Agent Projects
+#### Current Implementation
 
-The dashboard includes a diverse set of multi-agent projects:
-
-**Finance & Trading:**
-- **Quantum Traders** - Multi-agent quantum trading system
-- **Financial Advisor** - Investment portfolio optimization
-
-**Science & Research:**
-- **Bio Research Lab** - AI agents for drug discovery
-- **Space Explorer** - Autonomous space mission planning
-- **Climate Predictor** - Environmental modeling agents
-
-**Technology & Security:**
-- **Cyber Sentinel** - Advanced threat detection network
-
-**Creative & Entertainment:**
-- **Creative Studio** - AI-powered content generation
-- **Game Developer** - Procedural game world generation
-
-**Infrastructure & Healthcare:**
-- **Smart City Hub** - Urban infrastructure management
-- **Medical Diagnosis** - Healthcare diagnostic agents
+The dashboard currently provides:
+- **Scan Results Display**: View latest security analysis results
+- **Risk Summary**: Overview of critical, medium, and low severity risks
+- **Scan History**: Interactive list of previous scans with detailed views
+- **Security Metrics**: Total scans, risk counts, and system overview
 
 #### Dashboard URLs
 
@@ -284,35 +268,7 @@ npm install
 npm run build
 ```
 
-### Using with MCP Clients
 
-#### With Claude Desktop
-
-1. Add the server to your MCP configuration:
-
-```json
-{
-  "mcpServers": {
-    "autohardener": {
-      "command": "python",
-      "args": ["/path/to/your/mcpagentscanner/server.py"],
-      "env": {
-        "GOOGLE_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
-
-2. Restart Claude Desktop
-3. Use the `autoharden_agent` tool to analyze your AI agents
-
-#### With Other MCP Clients
-
-The server provides two tools:
-
-- `autoharden_agent(agent_path: str)`: Main security analysis tool
-- `ping_pong(random_string: str)`: Health check tool
 
 ## 🔍 How It Works
 
@@ -340,34 +296,14 @@ Uses Google Gemini to:
 - Detect tool misuse patterns
 - Suggest specific security mitigations
 
-### 3. Code Annotation
+### 3. Security Analysis
 
-Automatically adds security comments to your code:
+The tool provides comprehensive security analysis with:
 
-```python
-# 🚨 Critical: eval() detected
-# 💡 Avoid eval: use ast.literal_eval or safe parsing
-result = eval(user_input)  # Original line
-```
-
-### 4. YAML Integration
-
-If a `*_card.yaml` file exists, security findings are injected:
-
-```yaml
-security:
-  constraints:
-    - description: "Validate all user inputs"
-      severity: "critical"
-  risks:
-    - description: "Potential prompt injection"
-      severity: "medium"
-      impact: "Unauthorized code execution"
-  suggested_guardrails:
-    - "# Input validation function"
-    - "def validate_input(user_input):"
-    - "    return sanitized_input"
-```
+- **Static Pattern Detection**: Identifies dangerous code patterns
+- **AI-Powered Analysis**: Uses Google Gemini for advanced vulnerability detection
+- **Risk Categorization**: Classifies findings by severity (Critical/Medium/Low)
+- **Mitigation Suggestions**: Provides specific recommendations for each risk
 
 ## 📊 Example Output
 
@@ -379,15 +315,11 @@ security:
      🚨 Critical: 2
      ⚠️ Medium: 2
      ℹ️ Low: 1
-🤖 Phase 2: Integrating Claude findings...
-   Claude identified 3 additional risks:
+🤖 Phase 2: AI-powered analysis...
+   Google Gemini identified 3 additional risks:
      🚨 Critical: 1
      ⚠️ Medium: 1
      ℹ️ Low: 1
-✏️ Phase 3: Applying security comments...
-   3 files need security annotations
-✅ Annotated 2 risks in agent.py
-✅ Annotated 1 risks in utils.py
 ✅ Results sent to web app at http://localhost:5001
 
 📋 Security Analysis Summary:
@@ -403,9 +335,8 @@ The web dashboard provides a beautiful interface to view:
 - **Real-time scan results** with severity indicators
 - **Interactive scan history** with clickable entries
 - **Security constraints and risks** with color-coded severity
-- **Code recommendations** with syntax highlighting
 - **Summary statistics** and metrics
-- **Multi-project navigation** with diverse agent themes
+- **Detailed scan analysis** through modal popups
 
 ## 🛡️ Security Features
 
@@ -436,18 +367,6 @@ CRITICAL_CALLS = {
     'your_risky_function': 'Your custom warning message',
     # ... existing patterns
 }
-```
-
-### Adding Custom Threat Intelligence
-
-Place additional threat markdown files in the `threat_list/` directory:
-
-```markdown
-## Your Custom Threat
-
-Description of the threat and mitigation strategies.
-
----
 ```
 
 ## 🐛 Troubleshooting
@@ -499,7 +418,6 @@ logging.basicConfig(level=logging.DEBUG)
 - Built with [FastMCP](https://github.com/fastmcp/fastmcp)
 - Powered by [Google Gemini](https://ai.google.dev/)
 - Security patterns based on OWASP guidelines
-- Threat intelligence from various security frameworks
 - Modern UI built with React and Tailwind CSS
 
 ## 📞 Support
