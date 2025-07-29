@@ -73,33 +73,85 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 
 ### Using with MCP Clients
 
+The MCP Agent Scanner can be used with various MCP clients. Here's how to register it with different clients:
+
 #### With Claude Desktop
 
-Add the server to your MCP configuration:
+1. **Open Claude Desktop Settings**
+   - Go to Settings → MCP Servers
+   - Click "Add Server"
 
+2. **Configure the Server**
+   ```json
+   {
+     "mcpServers": {
+       "autohardener": {
+         "command": "python",
+         "args": ["/path/to/your/mcpagentscanner/server.py"],
+         "env": {
+           "GOOGLE_API_KEY": "your_api_key_here"
+         }
+       }
+     }
+   }
+   ```
+
+3. **Restart Claude Desktop**
+4. **Use the `autoharden_agent` tool** to analyze your AI agents
+
+#### With Cursor (VS Code)
+
+1. **Open Cursor Settings**
+   - Go to Settings → Extensions → MCP
+   - Or add to your `settings.json`:
+
+2. **Add MCP Configuration**
+   ```json
+   {
+     "mcp.servers": {
+       "autohardener": {
+         "command": "python",
+         "args": ["/path/to/your/mcpagentscanner/server.py"],
+         "env": {
+           "GOOGLE_API_KEY": "your_api_key_here"
+         }
+       }
+     }
+   }
+   ```
+
+3. **Restart Cursor**
+4. **Access via Command Palette**: `MCP: List Tools`
+
+#### With Other MCP Clients
+
+**Available Tools:**
+- **`autoharden_agent(agent_path: str)`**: Main security analysis tool
+- **`ping_pong(random_string: str)`**: Health check tool
+
+**Supported Clients:**
+- **Claude Desktop**: Native MCP support
+- **Cursor**: VS Code-based with MCP extension
+- **Neovim**: Via MCP plugins
+- **Emacs**: Via MCP packages
+- **Custom Clients**: Any MCP-compatible client
+
+**Configuration Format:**
 ```json
 {
-  "mcpServers": {
-    "autohardener": {
-      "command": "python",
-      "args": ["/path/to/your/mcpagentscanner/server.py"],
-      "env": {
-        "GOOGLE_API_KEY": "your_api_key_here"
-      }
-    }
+  "command": "python",
+  "args": ["/absolute/path/to/mcpagentscanner/server.py"],
+  "env": {
+    "GOOGLE_API_KEY": "your_gemini_api_key"
   }
 }
 ```
 
-1. Restart Claude Desktop
-2. Use the `autoharden_agent` tool to analyze your AI agents
-
-#### With Other MCP Clients
-
-The server provides two tools:
-
-- **`autoharden_agent(agent_path: str)`**: Main security analysis tool
-- **`ping_pong(random_string: str)`**: Health check tool
+**Important Notes:**
+- Use absolute paths for the server.py file
+- Ensure your Google Gemini API key is set in the environment
+- The server must be accessible from your MCP client
+- Restart your MCP client after configuration changes
 
 ### Quick Start (Recommended)
 
