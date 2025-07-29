@@ -121,7 +121,8 @@ const Dashboard = () => {
 
   return (
     <AppLayout latestScanTime={scanResults?.timestamp || scanHistory[0]?.timestamp}>
-      <div className="p-6 space-y-6">
+      <div className="p-8 space-y-8 bg-gray-100 min-h-screen">
+        <div className="bg-white rounded-lg p-8 shadow-sm space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-2">
             <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
@@ -141,8 +142,6 @@ const Dashboard = () => {
         
         <SystemMetrics data={updatedSystemOverview} />
         
-
-        
         {/* Tabs Section */}
         <Tabs defaultValue="recent-activity">
           <TabsList className="grid w-full md:w-[400px] grid-cols-2">
@@ -150,11 +149,11 @@ const Dashboard = () => {
             <TabsTrigger value="risk-summary">Risk Summary</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="recent-activity" className="mt-4 space-y-4">
+          <TabsContent value="recent-activity" className="mt-6 space-y-4">
             {/* Recent Activity content removed as requested */}
           </TabsContent>
           
-          <TabsContent value="risk-summary" className="mt-4 space-y-4">
+          <TabsContent value="risk-summary" className="mt-6 space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Risk Summary</CardTitle>
@@ -229,7 +228,8 @@ const Dashboard = () => {
                         <p className="text-2xl font-bold text-green-600">{scanResults.risks_count || 0}</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       {/* Left column - Security Constraints and Risks */}
                       <div className="space-y-6">
                         {scanResults.constraints && scanResults.constraints.length > 0 && (
@@ -345,11 +345,12 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         )}
+        </div>
 
         {/* Selected Scan Details Modal */}
         {selectedScan && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-75 z-[9999]" style={{ position: 'fixed', top: '-100px', left: '-100px', right: '-100px', bottom: '-100px', width: 'calc(100vw + 200px)', height: 'calc(100vh + 200px)' }}>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-4">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold">Scan Details</h2>

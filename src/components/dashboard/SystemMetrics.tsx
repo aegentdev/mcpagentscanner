@@ -22,14 +22,14 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ data }) => {
       borderColor: 'border-blue-200'
     },
     {
-      label: 'Number Critical',
+      label: 'Number Critical Risks',
       value: data.totalCritical,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       borderColor: 'border-red-200'
     },
     {
-      label: 'Number Medium',
+      label: 'Number Medium Risks',
       value: data.totalMedium,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
