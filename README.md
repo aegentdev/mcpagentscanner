@@ -369,6 +369,70 @@ CRITICAL_CALLS = {
 }
 ```
 
+## 🚀 Future Focus
+
+We're actively developing new features to enhance the MCP Agent Scanner. Here's what's coming next:
+
+### 🔮 Planned Features
+
+#### **Enhanced Security Analysis**
+- **🔍 Advanced Pattern Detection**: Machine learning-based vulnerability detection
+- **📊 Risk Scoring**: Quantitative risk assessment with confidence scores
+- **🛡️ Custom Security Rules**: User-defined security patterns and rules
+- **🔗 Dependency Analysis**: Security analysis of imported libraries and dependencies
+
+#### **Code Enhancement**
+- **✏️ Automatic Code Annotation**: Add security comments directly to source code
+- **🔧 Auto-Fix Suggestions**: Automated code fixes for common security issues
+- **📝 Security Documentation**: Generate security documentation for analyzed code
+- **🔄 Code Refactoring**: Suggest secure alternatives for risky code patterns
+
+#### **Dashboard Improvements**
+- **🌙 Dark/Light Mode**: Theme switching for better user experience
+- **📈 Advanced Analytics**: Detailed security metrics and trend analysis
+- **🔔 Real-time Alerts**: Instant notifications for critical security findings
+- **📱 Mobile Optimization**: Enhanced mobile dashboard experience
+
+#### **Multi-Agent Support**
+- **🏗️ Multi-Project Management**: Switch between different agent projects
+- **👥 Team Collaboration**: Share scan results and collaborate on security
+- **📋 Project Templates**: Pre-configured security templates for common use cases
+- **🔄 Batch Scanning**: Scan multiple agents simultaneously
+
+#### **Integration & Automation**
+- **🔗 CI/CD Integration**: Automated security scanning in development pipelines
+- **📊 API Enhancements**: RESTful API for programmatic access
+- **🤖 Webhook Support**: Real-time notifications for security events
+- **📋 Export Options**: Export results in various formats (PDF, CSV, JSON)
+
+#### **Advanced AI Features**
+- **🧠 Context-Aware Analysis**: AI that understands your specific use case
+- **🔍 Semantic Code Analysis**: Deep understanding of code intent and purpose
+- **📚 Learning from Feedback**: AI that improves based on user corrections
+- **🎯 Custom AI Models**: Train models on your specific security requirements
+
+### 🎯 Development Priorities
+
+1. **Phase 1**: Enhanced pattern detection and risk scoring
+2. **Phase 2**: Code annotation and auto-fix capabilities
+3. **Phase 3**: Multi-project support and team collaboration
+4. **Phase 4**: Advanced AI features and custom models
+
+### 🤝 Contributing to Future Features
+
+We welcome contributions! If you'd like to help build these features:
+
+1. **Fork the repository**
+2. **Create a feature branch**
+3. **Implement your improvements**
+4. **Submit a pull request**
+
+**Priority Areas for Contributors:**
+- Enhanced security pattern detection
+- Dashboard UI/UX improvements
+- API enhancements
+- Documentation and examples
+
 ## 🐛 Troubleshooting
 
 ### Common Issues
