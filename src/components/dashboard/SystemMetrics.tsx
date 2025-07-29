@@ -2,9 +2,9 @@
 import { Card, CardContent } from '@/components/ui/card';
 
 interface SystemOverview {
-  compromised: number;
-  avgRiskScore: number;
-  connectivity: number;
+  totalScans: number;
+  totalCritical: number;
+  totalMedium: number;
   highRiskCount: number;
 }
 
@@ -15,32 +15,32 @@ interface SystemMetricsProps {
 const SystemMetrics: React.FC<SystemMetricsProps> = ({ data }) => {
   const metrics = [
     {
-      label: 'Compromised',
-      value: data.compromised,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200'
-    },
-    {
-      label: 'Avg Risk Score',
-      value: data.avgRiskScore,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-200'
-    },
-    {
-      label: 'Connectivity',
-      value: `${data.connectivity}%`,
+      label: 'Total Scans',
+      value: data.totalScans,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200'
     },
     {
-      label: 'High Risk',
-      value: data.highRiskCount,
+      label: 'Number Critical',
+      value: data.totalCritical,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       borderColor: 'border-red-200'
+    },
+    {
+      label: 'Number Medium',
+      value: data.totalMedium,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200'
+    },
+    {
+      label: 'High Risk',
+      value: data.highRiskCount,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200'
     }
   ];
 

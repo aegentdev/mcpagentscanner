@@ -29,11 +29,11 @@ const Dashboard = () => {
 
   // Update system overview based on scan results
   const updatedSystemOverview = {
-    compromised: scanResults?.success ? 0 : 1,
-    avgRiskScore: scanResults?.risks?.length ? 
-      Math.round((scanResults.risks.filter((r: any) => r.severity === 'critical').length * 10 + 
-                  scanResults.risks.filter((r: any) => r.severity === 'medium').length * 5) / scanResults.risks.length) : 0,
-    connectivity: scanHistory.length * 10,
+    totalScans: scanHistory.length,
+    totalCritical: scanHistory.reduce((total, scan) => 
+      total + (scan.risks?.filter((r: any) => r.severity === 'critical').length || 0), 0),
+    totalMedium: scanHistory.reduce((total, scan) => 
+      total + (scan.risks?.filter((r: any) => r.severity === 'medium').length || 0), 0),
     highRiskCount: scanResults?.risks?.filter((r: any) => r.severity === 'critical').length || 0
   };
 
@@ -141,6 +141,8 @@ const Dashboard = () => {
         
         <SystemMetrics data={updatedSystemOverview} />
         
+
+        
         {/* Tabs Section */}
         <Tabs defaultValue="recent-activity">
           <TabsList className="grid w-full md:w-[400px] grid-cols-2">
@@ -223,8 +225,8 @@ const Dashboard = () => {
                         </p>
                       </div>
                       <div className="p-4 bg-green-50 rounded-lg">
-                        <p className="text-sm font-medium text-green-800">Suggestions</p>
-                        <p className="text-2xl font-bold text-green-600">{scanResults.constraints_count || 0}</p>
+                        <p className="text-sm font-medium text-green-800">Total Risks</p>
+                        <p className="text-2xl font-bold text-green-600">{scanResults.risks_count || 0}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -322,14 +324,14 @@ const Dashboard = () => {
                     </div>
                     
                     <div className="flex gap-2 mt-3">
-                      {scan.risks_count && scan.risks_count > 0 && (
+                      {scan.risks && scan.risks.filter((r: any) => r.severity === 'critical').length > 0 && (
                         <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
-                          {scan.risks_count} Critical
+                          {scan.risks.filter((r: any) => r.severity === 'critical').length} Critical
                         </span>
                       )}
-                      {scan.constraints_count && scan.constraints_count > 0 && (
+                      {scan.risks && scan.risks.filter((r: any) => r.severity === 'medium').length > 0 && (
                         <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
-                          {scan.constraints_count} Medium
+                          {scan.risks.filter((r: any) => r.severity === 'medium').length} Medium
                         </span>
                       )}
                     </div>
