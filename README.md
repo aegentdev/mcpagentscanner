@@ -26,7 +26,7 @@ A Model Context Protocol (MCP) server that automatically analyzes and hardens AI
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/aegentdev/mcpagentscanner.git
 cd mcpagentscanner
 ```
 
