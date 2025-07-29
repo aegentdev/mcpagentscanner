@@ -67,6 +67,10 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 
 ## 🚀 Usage
 
+### ⚠️ IMPORTANT: You MUST Set Up MCP Client
+
+**Before using this tool, you MUST configure an MCP client (like Claude Desktop) to connect to the server. The web dashboard is for viewing results only - all scanning is done through MCP clients.**
+
 ### Using with MCP Clients
 
 #### With Claude Desktop
@@ -99,6 +103,8 @@ The server provides two tools:
 
 ### Quick Start (Recommended)
 
+**Note: The web dashboard only displays scan results. To perform scans, you must first set up an MCP client (see section above).**
+
 ```bash
 # Build the frontend
 npm run build
@@ -118,8 +124,8 @@ python3 run_dashboard.py
 ```
 
 This will start:
-- **Web Dashboard** at http://localhost:5001
-- **MCP Server** ready for connections
+- **Web Dashboard** at http://localhost:5001 (for viewing results)
+- **MCP Server** ready for connections (for performing scans via MCP clients)
 
 ### Option 2: Run Services Separately
 
