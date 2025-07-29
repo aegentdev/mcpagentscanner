@@ -91,19 +91,7 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const activityItems = scanHistory.length > 0 ? scanHistory.slice(0, 4).map((scan) => ({
-    type: scan.success ? 'success' : 'error',
-    title: scan.success ? 'Security scan completed' : 'Security scan failed',
-    description: scan.file_path ? `Analyzed ${scan.file_path.split('/').pop()}` : 'Unknown file',
-    time: scan.timestamp ? new Date(scan.timestamp).toLocaleString() : 'Unknown time'
-  })) : [
-    {
-      type: 'info',
-      title: 'No scans yet',
-      description: 'Run your first security scan to see activity here',
-      time: 'No activity'
-    }
-  ];
+
 
   const riskItems = scanResults?.risks?.slice(0, 3).map((risk: any) => ({
     title: risk.description,
@@ -117,14 +105,7 @@ const Dashboard = () => {
     }
   ];
 
-  const getActivityTypeColor = (type: string) => {
-    switch (type) {
-      case 'warning': return 'bg-yellow-500';
-      case 'error': return 'bg-red-500';
-      case 'success': return 'bg-green-500';
-      default: return 'bg-blue-500';
-    }
-  };
+
 
 
 
@@ -160,14 +141,17 @@ const Dashboard = () => {
         
         <SystemMetrics data={updatedSystemOverview} />
         
+        {/* Tabs Section */}
         <Tabs defaultValue="recent-activity">
           <TabsList className="grid w-full md:w-[400px] grid-cols-2">
             <TabsTrigger value="recent-activity">Recent Activity</TabsTrigger>
             <TabsTrigger value="risk-summary">Risk Summary</TabsTrigger>
           </TabsList>
           
+          <TabsContent value="recent-activity" className="mt-4 space-y-4">
+            {/* Recent Activity content removed as requested */}
+          </TabsContent>
           
-
           <TabsContent value="risk-summary" className="mt-4 space-y-4">
             <Card>
               <CardHeader>
@@ -180,10 +164,10 @@ const Dashboard = () => {
                 <div className="space-y-4">
                   {riskItems.map((item, index) => (
                     <div key={index} className="flex items-start gap-4 pb-4 border-b last:border-0 last:pb-0">
-                      <div className={`w-2 h-2 mt-2 rounded-full ${getRiskSeverityColor(item.severity)}`} />
+                      <div className={`w-2 h-2 rounded-full mt-2 ${getRiskSeverityColor(item.severity)}`}></div>
                       <div className="flex-1">
-                        <p className="font-medium">{item.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                        <h4 className="font-medium">{item.title}</h4>
+                        <p className="text-sm text-muted-foreground">{item.description}</p>
                       </div>
                     </div>
                   ))}
