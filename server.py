@@ -669,11 +669,27 @@ def autoharden_agent(agent_path: str) -> dict:
     try:
         print(f"🔍 Analyzing: {agent_path}")
         
-        # Check if file exists
+        # Check if path exists
         if not os.path.exists(agent_path):
             return {
-                "error": f"File not found: {agent_path}",
+                "error": f"Path not found: {agent_path}",
                 "success": False
+            }
+        
+        # Check if it's a directory
+        if os.path.isdir(agent_path):
+            return {
+                "error": f"Path is a directory: {agent_path}. Use autoharden_directory() for directory scanning, or provide a specific Python file path.",
+                "success": False,
+                "suggestion": "Use autoharden_directory() to scan all Python files in a directory, or provide a specific .py file path."
+            }
+        
+        # Check if it's a Python file
+        if not agent_path.endswith('.py'):
+            return {
+                "error": f"File is not a Python file: {agent_path}",
+                "success": False,
+                "suggestion": "Please provide a .py file path for analysis."
             }
         
         # Determine paths
@@ -737,6 +753,136 @@ def autoharden_agent(agent_path: str) -> dict:
             "error": str(e),
             "success": False,
             "file_path": agent_path
+        }
+
+@mcp.tool
+def autoharden_directory(directory_path: str) -> dict:
+    """Analyze and harden all Python files in a directory with security guardrails"""
+    try:
+        print(f"🔍 Analyzing directory: {directory_path}")
+        
+        # Check if directory exists
+        if not os.path.exists(directory_path):
+            return {
+                "error": f"Directory not found: {directory_path}",
+                "success": False
+            }
+        
+        if not os.path.isdir(directory_path):
+            return {
+                "error": f"Path is not a directory: {directory_path}",
+                "success": False,
+                "suggestion": "Use autoharden_agent() for single file analysis."
+            }
+        
+        # Find all Python files in the directory
+        python_files = []
+        for root, dirs, files in os.walk(directory_path):
+            for file in files:
+                if file.endswith('.py'):
+                    python_files.append(os.path.join(root, file))
+        
+        if not python_files:
+            return {
+                "error": f"No Python files found in directory: {directory_path}",
+                "success": False,
+                "suggestion": "Ensure the directory contains .py files for analysis."
+            }
+        
+        print(f"📁 Found {len(python_files)} Python files to analyze")
+        
+        # Analyze each Python file
+        results = []
+        successful_analyses = 0
+        failed_analyses = 0
+        
+        for file_path in python_files:
+            try:
+                print(f"🔍 Analyzing: {os.path.basename(file_path)}")
+                
+                # Retrieve security context
+                retrieved_context = retrieve_context("prompt injection, tool misuse, agent execution")
+                
+                # Extract metadata
+                agent_card, tool_schema, routing_logic = extract_metadata_from_file(file_path)
+                agent_card_str = json.dumps(agent_card, indent=2)
+                tool_schema_str = json.dumps(tool_schema, indent=2)
+                
+                # Get guardrails from Claude
+                parsed = get_guardrails(agent_card_str, tool_schema_str, routing_logic, retrieved_context)
+                
+                if parsed:
+                    # Apply security analysis and annotations
+                    root_dir = os.path.dirname(os.path.abspath(file_path))
+                    analyze_and_comment_codebase(root_dir, parsed)
+                    
+                    # Inject guardrails into YAML if it exists
+                    yaml_path = file_path.replace(".py", "_card.yaml")
+                    if os.path.exists(yaml_path):
+                        inject_guardrails_yaml(yaml_path, parsed)
+                    
+                    # Format results
+                    constraints = parsed.get("constraints", [])
+                    risks = parsed.get("risks", [])
+                    
+                    file_result = {
+                        "file_path": file_path,
+                        "success": True,
+                        "constraints_count": len(constraints),
+                        "risks_count": len(risks),
+                        "constraints": constraints,
+                        "risks": risks,
+                        "hardened_code": parsed.get("hardened_code", [])
+                    }
+                    
+                    results.append(file_result)
+                    successful_analyses += 1
+                else:
+                    failed_analyses += 1
+                    results.append({
+                        "file_path": file_path,
+                        "success": False,
+                        "error": "Failed to generate guardrails"
+                    })
+                    
+            except Exception as e:
+                failed_analyses += 1
+                results.append({
+                    "file_path": file_path,
+                    "success": False,
+                    "error": str(e)
+                })
+        
+        # Calculate summary statistics
+        total_constraints = sum(r.get("constraints_count", 0) for r in results if r.get("success"))
+        total_risks = sum(r.get("risks_count", 0) for r in results if r.get("success"))
+        
+        # Create summary result
+        summary_result = {
+            "success": True,
+            "directory_path": directory_path,
+            "total_files": len(python_files),
+            "successful_analyses": successful_analyses,
+            "failed_analyses": failed_analyses,
+            "total_constraints": total_constraints,
+            "total_risks": total_risks,
+            "message": f"Analyzed {successful_analyses}/{len(python_files)} files in {os.path.basename(directory_path)}",
+            "file_results": results
+        }
+        
+        # Send results to web app if available
+        try:
+            send_results_to_webapp(summary_result)
+        except Exception as e:
+            print(f"⚠️ Could not send results to web app: {e}")
+        
+        return summary_result
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "success": False,
+            "directory_path": directory_path
         }
 
 @mcp.tool

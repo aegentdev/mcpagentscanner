@@ -129,7 +129,8 @@ The MCP Agent Scanner can be used with various MCP clients. Here's how to regist
 #### With Other MCP Clients
 
 **Available Tools:**
-- **`autoharden_agent(agent_path: str)`**: Main security analysis tool
+- **`autoharden_agent(agent_path: str)`**: Main security analysis tool for single Python files
+- **`autoharden_directory(directory_path: str)`**: **NEW!** Analyze all Python files in a directory
 - **`ping_pong(random_string: str)`**: Health check tool
 
 **Supported Clients:**
@@ -155,6 +156,39 @@ The MCP Agent Scanner can be used with various MCP clients. Here's how to regist
 - Ensure your Google Gemini API key is set in the environment
 - The server must be accessible from your MCP client
 - Restart your MCP client after configuration changes
+
+### 🆕 Directory Scanning Support
+
+The MCP Agent Scanner now supports analyzing entire directories of Python files with the new `autoharden_directory()` tool.
+
+**Usage Examples:**
+```
+# Analyze a single file (original functionality)
+/autoharden_agent /path/to/your/agent.py
+
+# Analyze all Python files in a directory (NEW!)
+/autoharden_directory /path/to/your/agent/project
+```
+
+**Directory Scanning Features:**
+- **Recursive Analysis**: Scans all subdirectories for Python files
+- **Batch Processing**: Analyzes multiple files efficiently
+- **Summary Reports**: Provides overview of all files analyzed
+- **Individual Results**: Detailed results for each file
+- **Error Handling**: Continues analysis even if some files fail
+
+**When to Use Directory Scanning:**
+- **Multi-file Projects**: When your agent spans multiple Python files
+- **Codebases**: For comprehensive security analysis of entire projects
+- **Batch Analysis**: When you want to analyze multiple related agents
+- **CI/CD Integration**: For automated security scanning of codebases
+
+**MCP Client Guidance:**
+When users provide directory paths to `autoharden_agent()`, the tool now provides helpful suggestions:
+- Automatically detects when a directory is passed instead of a file
+- Suggests using `autoharden_directory()` for directory analysis
+- Provides clear error messages and guidance
+- Maintains backward compatibility with single file analysis
 
 ### Quick Start (Recommended)
 
