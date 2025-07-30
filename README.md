@@ -70,7 +70,18 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 
 ## 🚀 Usage
 
-### ⚠️ IMPORTANT: You MUST Set Up MCP Client
+### ⚠️ IMPORTANT: Two Separate Components
+
+**This tool has TWO separate components that run independently:**
+
+1. **MCP Server** (`server.py`) - Performs security scanning via MCP clients
+2. **Web Dashboard** (`web_app.py`) - Displays scan results in a web interface
+
+**You MUST run both components separately to use the full functionality.**
+
+---
+
+## 🔧 Step 1: Set Up MCP Client Configuration
 
 **Before using this tool, you MUST configure an MCP client (like Claude Desktop) to connect to the server. The web dashboard is for viewing results only - all scanning is done through MCP clients.**
 
@@ -190,9 +201,60 @@ When users provide directory paths to `autoharden_agent()`, the tool now provide
 - Provides clear error messages and guidance
 - Maintains backward compatibility with single file analysis
 
-### Quick Start (Recommended)
+---
 
-**Note: The web dashboard only displays scan results. To perform scans, you must first set up an MCP client (see section above).**
+## 🚀 Step 2: Running the Components
+
+### Option 1: Run Services Separately (Recommended)
+
+#### 🔧 Terminal 1: Start the MCP Server
+
+```bash
+# Start the MCP server for scanning
+python3 server.py
+```
+
+**What this does:**
+- Starts the MCP server that performs security analysis
+- Listens for connections from MCP clients (Claude Desktop, Cursor, etc.)
+- Processes scan requests and sends results to the web dashboard
+
+**Expected output:**
+```
+🚀 MCP Server starting...
+📡 Server listening for MCP connections...
+✅ Ready to accept scan requests from MCP clients
+```
+
+#### 🌐 Terminal 2: Start the Web Dashboard
+
+```bash
+# Build the frontend (first time only)
+npm run build
+
+# Start the web dashboard
+python3 web_app.py
+```
+
+**What this does:**
+- Starts the web interface for viewing scan results
+- Provides a beautiful React-based dashboard
+- Displays real-time scan history and detailed analysis
+
+**Expected output:**
+```
+🌐 Web Dashboard starting...
+📊 Dashboard available at http://localhost:5001
+✅ Ready to display scan results
+```
+
+**Visit http://localhost:5001** to access the dashboard.
+
+
+
+### Option 2: Quick Start (Development)
+
+For development and testing:
 
 ```bash
 # Build the frontend
@@ -203,36 +265,6 @@ python3 app.py
 ```
 
 Visit http://localhost:5001 to access the dashboard.
-
-### Option 1: Run Everything Together
-
-Use the dashboard runner to start both the MCP server and web interface:
-
-```bash
-python3 run_dashboard.py
-```
-
-This will start:
-- **Web Dashboard** at http://localhost:5001 (for viewing results)
-- **MCP Server** ready for connections (for performing scans via MCP clients)
-
-### Option 2: Run Services Separately
-
-#### Running the MCP Server Only
-
-```bash
-python3 server.py
-```
-
-The server will start and be ready to accept MCP connections.
-
-#### Running the Web Dashboard Only
-
-```bash
-python3 web_app.py
-```
-
-The web dashboard will be available at http://localhost:5001
 
 ### 🖥️ Modern Web Dashboard
 
