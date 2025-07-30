@@ -1,562 +1,120 @@
-# MCP Agent Scanner - AutoHardener 
- 
-🔒 **AI Agent Security Hardening Tool**
+# MCP Agent Scanner - AutoHardener
 
-A Model Context Protocol (MCP) server that automatically analyzes and hardens AI agents with security guardrails. This tool combines static code analysis with AI-powered security recommendations to identify vulnerabilities and suggest mitigations.
+AI Agent Security Hardening Tool using Model Context Protocol (MCP).
 
-## 🚀 Features
+## Features
 
-- **Static Security Analysis**: Detects common security patterns in Python code
-- **AI-Powered Recommendations**: Uses Google Gemini to identify agent-specific vulnerabilities
-- **Risk Categorization**: Classifies risks as Critical, Medium, or Low severity
-- **Modern Web Dashboard**: Beautiful React-based interface with real-time updates
-- **Interactive Scan History**: Click any scan for detailed analysis view
-- **Responsive Design**: Optimized for desktop and mobile viewing
+- Static security analysis of Python code
+- AI-powered vulnerability detection using Google Gemini
+- Risk categorization (Critical, Medium, Low)
+- Web dashboard for viewing scan results
+- MCP server for integration with AI clients
 
-### 🔧 Core Security Features
-
-- **Code Pattern Detection**: Identifies dangerous functions like `eval()`, `exec()`, `subprocess.call()`
-- **AI Analysis**: Uses Google Gemini to analyze agent architecture and identify vulnerabilities
-- **Risk Assessment**: Provides detailed risk analysis with severity levels and mitigation suggestions
-- **Real-time Dashboard**: View scan results and history through a modern web interface
-
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.8+
-- Node.js 16+ (for frontend)
+- Node.js 16+
 - Google Gemini API key
-- FastMCP framework
 
-## 🛠️ Installation
+## Installation
 
-### 1. Clone the Repository
-
+1. Clone the repository
 ```bash
 git clone https://github.com/aegentdev/mcpagentscanner.git
 cd mcpagentscanner
 ```
 
-### 2. Install Dependencies
-
+2. Install dependencies
 ```bash
-# Install Python dependencies
 pip install -r requirements.txt
-
-# Install Node.js dependencies
 npm install
 ```
 
-Or install manually:
-
-```bash
-pip install fastmcp sentence-transformers faiss-cpu google-genai python-dotenv pyyaml
-npm install react react-dom @types/react @types/react-dom vite @vitejs/plugin-react typescript
+3. Set up environment variables
+Create a `.env` file:
 ```
-
-### 3. Set Up Environment Variables
-
-Create a `.env` file in the project root:
-
-```bash
-# Required: Google Gemini API key
 GOOGLE_API_KEY=your_gemini_api_key_here
 ```
 
-### 4. Get Google Gemini API Key
+## MCP Configuration
 
-1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Create a new API key
-3. Add it to your `.env` file
+Configure your MCP client (Claude Desktop, Cursor, etc.) to connect to the server:
 
-## 🚀 Usage
-
-### ⚠️ IMPORTANT: Two Separate Components
-
-**This tool has TWO separate components that run independently:**
-
-1. **MCP Server** (`server.py`) - Performs security scanning via MCP clients
-2. **Web Dashboard** (`web_app.py`) - Displays scan results in a web interface
-
-**You MUST run both components separately to use the full functionality.**
-
----
-
-## 🔧 Step 1: Set Up MCP Client Configuration
-
-**Before using this tool, you MUST configure an MCP client (like Claude Desktop) to connect to the server. The web dashboard is for viewing results only - all scanning is done through MCP clients.**
-
-### Using with MCP Clients
-
-The MCP Agent Scanner can be used with various MCP clients. Here's how to register it with different clients:
-
-#### With Claude Desktop
-
-1. **Open Claude Desktop Settings**
-   - Go to Settings → MCP Servers
-   - Click "Add Server"
-
-2. **Configure the Server**
-   ```json
-   {
-     "mcpServers": {
-       "autohardener": {
-         "command": "python",
-         "args": ["/path/to/your/mcpagentscanner/server.py"],
-         "env": {
-           "GOOGLE_API_KEY": "your_api_key_here"
-         }
-       }
-     }
-   }
-   ```
-
-3. **Restart Claude Desktop**
-4. **Use the `autoharden_agent` tool** to analyze your AI agents
-
-#### With Cursor (VS Code)
-
-1. **Open Cursor Settings**
-   - Go to Settings → Extensions → MCP
-   - Or add to your `settings.json`:
-
-2. **Add MCP Configuration**
-   ```json
-   {
-     "mcp.servers": {
-       "autohardener": {
-         "command": "python",
-         "args": ["/path/to/your/mcpagentscanner/server.py"],
-         "env": {
-           "GOOGLE_API_KEY": "your_api_key_here"
-         }
-       }
-     }
-   }
-   ```
-
-3. **Restart Cursor**
-4. **Access via Command Palette**: `MCP: List Tools`
-
-#### With Other MCP Clients
-
-**Available Tools:**
-- **`autoharden_agent(agent_path: str)`**: Main security analysis tool for single Python files
-- **`autoharden_directory(directory_path: str)`**: **NEW!** Analyze all Python files in a directory
-- **`ping_pong(random_string: str)`**: Health check tool
-
-**Supported Clients:**
-- **Claude Desktop**: Native MCP support
-- **Cursor**: VS Code-based with MCP extension
-- **Neovim**: Via MCP plugins
-- **Emacs**: Via MCP packages
-- **Custom Clients**: Any MCP-compatible client
-
-**Configuration Format:**
+### Claude Desktop
+Add to MCP Servers in settings:
 ```json
 {
-  "command": "python",
-  "args": ["/absolute/path/to/mcpagentscanner/server.py"],
-  "env": {
-    "GOOGLE_API_KEY": "your_gemini_api_key"
+  "mcpServers": {
+    "autohardener": {
+      "command": "python",
+      "args": ["/path/to/mcpagentscanner/server.py"],
+      "env": {
+        "GOOGLE_API_KEY": "your_api_key_here"
+      }
+    }
   }
 }
 ```
 
-**Important Notes:**
-- Use absolute paths for the server.py file
-- Ensure your Google Gemini API key is set in the environment
-- The server must be accessible from your MCP client
-- Restart your MCP client after configuration changes
-
-### 🆕 Directory Scanning Support
-
-The MCP Agent Scanner now supports analyzing entire directories of Python files with the new `autoharden_directory()` tool.
-
-**Usage Examples:**
-```
-# Analyze a single file (original functionality)
-/autoharden_agent /path/to/your/agent.py
-
-# Analyze all Python files in a directory (NEW!)
-/autoharden_directory /path/to/your/agent/project
-```
-
-**Directory Scanning Features:**
-- **Recursive Analysis**: Scans all subdirectories for Python files
-- **Batch Processing**: Analyzes multiple files efficiently
-- **Summary Reports**: Provides overview of all files analyzed
-- **Individual Results**: Detailed results for each file
-- **Error Handling**: Continues analysis even if some files fail
-
-**When to Use Directory Scanning:**
-- **Multi-file Projects**: When your agent spans multiple Python files
-- **Codebases**: For comprehensive security analysis of entire projects
-- **Batch Analysis**: When you want to analyze multiple related agents
-- **CI/CD Integration**: For automated security scanning of codebases
-
-**MCP Client Guidance:**
-When users provide directory paths to `autoharden_agent()`, the tool now provides helpful suggestions:
-- Automatically detects when a directory is passed instead of a file
-- Suggests using `autoharden_directory()` for directory analysis
-- Provides clear error messages and guidance
-- Maintains backward compatibility with single file analysis
-
----
-
-## 🚀 Step 2: Running the Components
-
-### Option 1: Run Services Separately (Recommended)
-
-#### 🔧 Terminal 1: Start the MCP Server
-
-```bash
-# Start the MCP server for scanning
-python3 server.py
-```
-
-**What this does:**
-- Starts the MCP server that performs security analysis
-- Listens for connections from MCP clients (Claude Desktop, Cursor, etc.)
-- Processes scan requests and sends results to the web dashboard
-
-**Expected output:**
-```
-🚀 MCP Server starting...
-📡 Server listening for MCP connections...
-✅ Ready to accept scan requests from MCP clients
-```
-
-#### 🌐 Terminal 2: Start the Web Dashboard
-
-```bash
-# Build the frontend (first time only)
-npm run build
-
-# Start the web dashboard
-python3 web_app.py
-```
-
-**What this does:**
-- Starts the web interface for viewing scan results
-- Provides a beautiful React-based dashboard
-- Displays real-time scan history and detailed analysis
-
-**Expected output:**
-```
-🌐 Web Dashboard starting...
-📊 Dashboard available at http://localhost:5001
-✅ Ready to display scan results
-```
-
-**Visit http://localhost:5001** to access the dashboard.
-
-
-
-### Option 2: Quick Start (Development)
-
-For development and testing:
-
-```bash
-# Build the frontend
-npm run build
-
-# Start the application
-python3 app.py
-```
-
-Visit http://localhost:5001 to access the dashboard.
-
-### 🖥️ Modern Web Dashboard
-
-The MCP Scanner includes a modern React-based web dashboard for viewing scan results.
-
-#### Dashboard Features
-
-- **🎨 Modern React UI**: Beautiful, responsive design with Tailwind CSS
-- **📊 Real-time Updates**: Automatically refreshes every 5 seconds
-- **🚨 Severity Indicators**: Color-coded risk levels (Critical/Medium/Low)
-- **📚 Interactive Scan History**: Click any scan for detailed modal view
-- **📈 Summary Cards**: Quick overview of risk counts and statistics
-- **🧭 Navigation**: Sidebar navigation with security analysis features
-- **🔍 Detailed Analysis**: Modal popups for comprehensive scan details
-
-#### Current Implementation
-
-The dashboard currently provides:
-- **Scan Results Display**: View latest security analysis results
-- **Risk Summary**: Overview of critical, medium, and low severity risks
-- **Scan History**: Interactive list of previous scans with detailed views
-- **Security Metrics**: Total scans, risk counts, and system overview
-
-#### Dashboard URLs
-
-- **Main Dashboard**: http://localhost:5001
-- **API Endpoint**: http://localhost:5001/api/scan
-- **Latest Results**: http://localhost:5001/api/results
-- **Scan History**: http://localhost:5001/api/history
-
-#### Troubleshooting the Frontend
-
-**Port 5001 already in use:**
-```bash
-# Kill any process using port 5001
-pkill -f "python3 app.py"
-
-# Or use a different port
-python3 app.py --port 5002
-```
-
-**Dashboard not loading:**
-```bash
-# Check if the web app is running
-curl http://localhost:5001/api/results
-
-# Restart the web app
-python3 app.py
-```
-
-**No data showing:**
-```bash
-# Send test data to verify the API
-curl -X POST http://localhost:5001/api/scan \
-  -H "Content-Type: application/json" \
-  -d '{"success":true,"message":"Test scan","constraints":[],"risks":[]}'
-```
-
-**Build errors:**
-```bash
-# Ensure Node.js and npm are installed
-node --version
-npm --version
-
-# Install dependencies manually if needed
-npm install
-npm run build
-```
-
-
-
-## 🔍 How It Works
-
-### 1. Static Analysis Phase
-
-The tool scans your codebase for known security patterns:
-
-**Critical Risks:**
-- `eval()`, `exec()`, `compile()` - Code execution vulnerabilities
-- `subprocess.call()`, `os.system()` - Command injection risks
-- `os.remove()`, `shutil.rmtree()` - File system vulnerabilities
-
-**Medium Risks:**
-- `bind_tools()`, `tools_by_name()` - Tool binding vulnerabilities
-- `open()` - File operation risks
-
-**Low Risks:**
-- `requests.get()`, `urllib.request()` - Network security concerns
-
-### 2. AI Analysis Phase
-
-Uses Google Gemini to:
-- Analyze agent architecture and purpose
-- Identify prompt injection vulnerabilities
-- Detect tool misuse patterns
-- Suggest specific security mitigations
-
-### 3. Security Analysis
-
-The tool provides comprehensive security analysis with:
-
-- **Static Pattern Detection**: Identifies dangerous code patterns
-- **AI-Powered Analysis**: Uses Google Gemini for advanced vulnerability detection
-- **Risk Categorization**: Classifies findings by severity (Critical/Medium/Low)
-- **Mitigation Suggestions**: Provides specific recommendations for each risk
-
-## 📊 Example Output
-
-### Terminal Output
-```
-🔍 Starting security analysis of: /path/to/agent
-📊 Phase 1: Static pattern detection...
-   Found 5 static security patterns:
-     🚨 Critical: 2
-     ⚠️ Medium: 2
-     ℹ️ Low: 1
-🤖 Phase 2: AI-powered analysis...
-   Google Gemini identified 3 additional risks:
-     🚨 Critical: 1
-     ⚠️ Medium: 1
-     ℹ️ Low: 1
-✅ Results sent to web app at http://localhost:5001
-
-📋 Security Analysis Summary:
-   Total risks identified: 8
-   🚨 Critical: 3
-   ⚠️ Medium: 3
-   ℹ️ Low: 2
-✅ Security analysis complete!
-```
-
-### Web Dashboard
-The web dashboard provides a beautiful interface to view:
-- **Real-time scan results** with severity indicators
-- **Interactive scan history** with clickable entries
-- **Security constraints and risks** with color-coded severity
-- **Summary statistics** and metrics
-- **Detailed scan analysis** through modal popups
-
-## 🛡️ Security Features
-
-### Risk Detection
-
-- **Prompt Injection**: Identifies overly broad prompts and insufficient input validation
-- **Tool Misuse**: Detects unsafe tool binding and execution patterns
-- **Code Execution**: Flags dangerous eval/exec usage
-- **File Operations**: Identifies path traversal and unsafe file handling
-- **Network Security**: Highlights insecure API calls and data transmission
-
-### Mitigation Strategies
-
-- Input validation and sanitization
-- Sandboxed execution environments
-- Proper error handling and logging
-- Secure tool binding patterns
-- Access control and authentication
-
-## 🔧 Configuration
-
-### Customizing Risk Patterns
-
-You can modify the risk patterns in the `StaticRiskDetector` class:
-
-```python
-CRITICAL_CALLS = {
-    'your_risky_function': 'Your custom warning message',
-    # ... existing patterns
+### Cursor
+Add to settings.json:
+```json
+{
+  "mcp.servers": {
+    "autohardener": {
+      "command": "python",
+      "args": ["/path/to/mcpagentscanner/server.py"],
+      "env": {
+        "GOOGLE_API_KEY": "your_api_key_here"
+      }
+    }
+  }
 }
 ```
 
-## 🚀 Future Focus
+## Usage
 
-We're actively developing new features to enhance the MCP Agent Scanner. Here's what's coming next:
+### Available MCP Tools
+- `autoharden_agent(agent_path: str)` - Analyze single Python file
+- `autoharden_directory(directory_path: str)` - Analyze all Python files in directory
+- `ping_pong(random_string: str)` - Health check
 
-### 🔮 Planned Features
+### Running the Components
 
-#### **Enhanced Security Analysis**
-- **🔍 Advanced Pattern Detection**: Machine learning-based vulnerability detection
-- **📊 Risk Scoring**: Quantitative risk assessment with confidence scores
-- **🛡️ Custom Security Rules**: User-defined security patterns and rules
-- **🔗 Dependency Analysis**: Security analysis of imported libraries and dependencies
-
-#### **Code Enhancement**
-- **✏️ Automatic Code Annotation**: Add security comments directly to source code
-- **🔧 Auto-Fix Suggestions**: Automated code fixes for common security issues
-- **📝 Security Documentation**: Generate security documentation for analyzed code
-- **🔄 Code Refactoring**: Suggest secure alternatives for risky code patterns
-
-#### **Dashboard Improvements**
-- **🌙 Dark/Light Mode**: Theme switching for better user experience
-- **📈 Advanced Analytics**: Detailed security metrics and trend analysis
-- **🔔 Real-time Alerts**: Instant notifications for critical security findings
-- **📱 Mobile Optimization**: Enhanced mobile dashboard experience
-
-#### **Multi-Agent Support**
-- **🏗️ Multi-Project Management**: Switch between different agent projects
-- **👥 Team Collaboration**: Share scan results and collaborate on security
-- **📋 Project Templates**: Pre-configured security templates for common use cases
-- **🔄 Batch Scanning**: Scan multiple agents simultaneously
-
-#### **Integration & Automation**
-- **🔗 CI/CD Integration**: Automated security scanning in development pipelines
-- **📊 API Enhancements**: RESTful API for programmatic access
-- **🤖 Webhook Support**: Real-time notifications for security events
-- **📋 Export Options**: Export results in various formats (PDF, CSV, JSON)
-
-#### **Advanced AI Features**
-- **🧠 Context-Aware Analysis**: AI that understands your specific use case
-- **🔍 Semantic Code Analysis**: Deep understanding of code intent and purpose
-- **📚 Learning from Feedback**: AI that improves based on user corrections
-- **🎯 Custom AI Models**: Train models on your specific security requirements
-
-### 🎯 Development Priorities
-
-1. **Phase 1**: Enhanced pattern detection and risk scoring
-2. **Phase 2**: Code annotation and auto-fix capabilities
-3. **Phase 3**: Multi-project support and team collaboration
-4. **Phase 4**: Advanced AI features and custom models
-
-### 🤝 Contributing to Future Features
-
-We welcome contributions! If you'd like to help build these features:
-
-1. **Fork the repository**
-2. **Create a feature branch**
-3. **Implement your improvements**
-4. **Submit a pull request**
-
-**Priority Areas for Contributors:**
-- Enhanced security pattern detection
-- Dashboard UI/UX improvements
-- API enhancements
-- Documentation and examples
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **"GOOGLE_API_KEY environment variable not set"**
-   - Ensure your `.env` file exists and contains the API key
-   - Verify the key is valid and has sufficient quota
-
-2. **"Failed to analyze file"**
-   - Check file permissions
-   - Ensure the file is valid Python code
-   - Verify the file path is correct
-
-3. **"Failed to parse Claude's response"**
-   - This usually indicates an API quota issue
-   - Check your Google Gemini API usage
-   - Verify your API key permissions
-
-4. **"Port already in use"**
-   ```bash
-   pkill -f "python3 app.py"
-   python3 app.py
-   ```
-
-### Debug Mode
-
-Add debug logging by modifying the server:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
+1. Start MCP Server (Terminal 1)
+```bash
+python3 server.py
 ```
 
-## 🤝 Contributing
+2. Start Web Dashboard (Terminal 2)
+```bash
+npm run build
+python3 web_app.py
+```
 
-1. Fork the repository
-2. Create a feature branch
-3. Add your improvements
-4. Submit a pull request
+3. Access dashboard at http://localhost:5001
 
-## 📄 License
+## How It Works
 
-[Add your license information here]
+1. Static Analysis - Scans code for security patterns
+2. AI Analysis - Uses Google Gemini for vulnerability detection
+3. Risk Assessment - Provides severity levels and mitigation suggestions
 
-## 🙏 Acknowledgments
+## Security Features
 
-- Built with [FastMCP](https://github.com/fastmcp/fastmcp)
-- Powered by [Google Gemini](https://ai.google.dev/)
-- Security patterns based on OWASP guidelines
-- Modern UI built with React and Tailwind CSS
+- Code execution vulnerability detection
+- Tool misuse pattern identification
+- File operation security analysis
+- Network security concerns
+- Prompt injection detection
 
-## 📞 Support
+## Troubleshooting
 
-For issues and questions:
-- Open an issue on GitHub
-- Check the troubleshooting section
-- Review the MCP documentation
+- Ensure Google API key is set in environment
+- Check file permissions and paths
+- Verify MCP client configuration
+- Restart MCP client after configuration changes
 
----
+## License
 
-**⚠️ Disclaimer**: This tool is for educational and security research purposes. Always review and test security recommendations before implementing them in production environments.
+[Add license information]
