@@ -7,7 +7,8 @@ AI Agent Security Hardening Tool using Model Context Protocol (MCP).
 - Static security analysis of Python code
 - AI-powered vulnerability detection using Google Gemini
 - Risk categorization (Critical, Medium, Low)
-- Web dashboard for viewing scan results
+- Modern React web dashboard for viewing scan results
+- Real-time scan monitoring and history
 - MCP server for integration with AI clients
 
 ## Prerequisites
@@ -79,26 +80,50 @@ Add to settings.json:
 - `autoharden_directory(directory_path: str)` - Analyze all Python files in directory
 - `ping_pong(random_string: str)` - Health check
 
-### Running the Components
+### Running the Modern Frontend
 
-1. Start MCP Server (Terminal 1)
+#### Option 1: Development Mode (Recommended)
 ```bash
-python3 server.py
+# Terminal 1: Start React development server
+npm run dev
+
+# Terminal 2: Start Flask backend (optional - for API endpoints)
+python app.py
 ```
 
-2. Start Web Dashboard (Terminal 2)
+Access the dashboard at http://localhost:3000
+
+#### Option 2: Production Build
 ```bash
+# Build the React app
 npm run build
-python3 web_app.py
+
+# Start Flask backend (serves the built React app)
+python app.py
 ```
 
-3. Access dashboard at http://localhost:5001
+Access the dashboard at http://localhost:5000
+
+#### Option 3: All-in-One Script
+```bash
+# Builds React app and starts both frontend and backend
+python run_modern_dashboard.py
+```
+
+### Frontend Features
+
+- **Real-time Dashboard**: Live monitoring of scan results
+- **Scan History**: View previous scans and their results
+- **Risk Analysis**: Detailed breakdown of security risks
+- **Modern UI**: Built with React, TypeScript, and Tailwind CSS
+- **Responsive Design**: Works on desktop and mobile devices
 
 ## How It Works
 
-1. Static Analysis - Scans code for security patterns
-2. AI Analysis - Uses Google Gemini for vulnerability detection
-3. Risk Assessment - Provides severity levels and mitigation suggestions
+1. **Static Analysis** - Scans code for security patterns
+2. **AI Analysis** - Uses Google Gemini for vulnerability detection
+3. **Risk Assessment** - Provides severity levels and mitigation suggestions
+4. **Real-time Updates** - Frontend automatically refreshes with new scan results
 
 ## Security Features
 
@@ -108,12 +133,27 @@ python3 web_app.py
 - Network security concerns
 - Prompt injection detection
 
+## Project Structure
+
+```
+mcpagentscanner/
+├── src/                    # React frontend source
+│   ├── components/         # React components
+│   ├── pages/             # Page components
+│   └── lib/               # Utility functions
+├── server.py              # MCP server
+├── app.py                 # Flask backend API
+├── run_modern_dashboard.py # All-in-one runner
+└── package.json           # Node.js dependencies
+```
+
 ## Troubleshooting
 
 - Ensure Google API key is set in environment
 - Check file permissions and paths
 - Verify MCP client configuration
 - Restart MCP client after configuration changes
+- If frontend doesn't load, try `npm install` to ensure dependencies are installed
 
 ## License
 
