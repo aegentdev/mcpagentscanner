@@ -117,4 +117,4 @@ python3 web_app.py
 
 ## License
 
-[Add license information]
+MIT License - see [LICENSE](LICENSE) file for details.
