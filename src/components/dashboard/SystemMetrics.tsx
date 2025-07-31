@@ -48,12 +48,12 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ data }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {metrics.map((metric, index) => (
         <Card key={index} className={`${metric.bgColor} ${metric.borderColor} border-2`}>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-sm font-medium text-muted-foreground mb-2">
+          <CardContent className="pt-8 pb-8 px-8">
+            <div className="text-center space-y-4">
+              <p className="text-sm font-medium text-muted-foreground leading-tight">
                 {metric.label}
               </p>
-              <p className={`text-3xl font-bold ${metric.color}`}>
+              <p className={`text-4xl font-bold ${metric.color} leading-none`}>
                 {metric.value}
               </p>
             </div>

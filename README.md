@@ -39,9 +39,9 @@ GOOGLE_API_KEY=your_gemini_api_key_here
 
 ## MCP Configuration
 
-Configure your MCP client (Claude Desktop, Cursor, etc.) to connect to the server:
+Configure your MCP client (Gemini, Cursor, etc.) to connect to the server:
 
-### Claude Desktop
+### Gemini Desktop
 Add to MCP Servers in settings:
 ```json
 {
@@ -77,7 +77,6 @@ Add to settings.json:
 
 ### Available MCP Tools
 - `autoharden_agent(agent_path: str)` - Analyze single Python file
-- `autoharden_directory(directory_path: str)` - Analyze all Python files in directory
 - `ping_pong(random_string: str)` - Health check
 
 ### Running the Modern Frontend
@@ -154,6 +153,8 @@ mcpagentscanner/
 - Verify MCP client configuration
 - Restart MCP client after configuration changes
 - If frontend doesn't load, try `npm install` to ensure dependencies are installed
+
+
 
 ## License
 

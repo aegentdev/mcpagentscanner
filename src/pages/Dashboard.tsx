@@ -3,7 +3,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import SystemMetrics from '@/components/dashboard/SystemMetrics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
+import { RefreshCw, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
 
 
 
@@ -76,6 +76,20 @@ const Dashboard = () => {
   // Close selected scan
   const closeSelectedScan = () => {
     setSelectedScan(null);
+  };
+
+  // Clear scan history
+  const clearHistory = async () => {
+    try {
+      const response = await fetch('/api/clear');
+      const data = await response.json();
+      if (data.status === 'success') {
+        setScanHistory([]);
+        setScanResults(null);
+      }
+    } catch (error) {
+      console.error('Error clearing history:', error);
+    }
   };
 
   useEffect(() => {
@@ -291,13 +305,25 @@ const Dashboard = () => {
         {scanHistory.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <RefreshCw size={16} />
-                Scan History
-              </CardTitle>
-              <CardDescription>
-                Previous security scans and their results
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <RefreshCw size={16} />
+                    Scan History
+                  </CardTitle>
+                  <CardDescription>
+                    Previous security scans and their results
+                  </CardDescription>
+                </div>
+                <button
+                  onClick={clearHistory}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                  title="Clear all scan history"
+                >
+                  <Trash2 size={16} />
+                  Clear History
+                </button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -307,8 +333,8 @@ const Dashboard = () => {
                     className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => handleScanClick(scan)}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
+                    <div className="flex items-start justify-between mb-2 gap-2">
+                      <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">
                           {scan.file_path ? scan.file_path.split('/').pop() : 'Unknown file'}
                         </p>
@@ -316,7 +342,7 @@ const Dashboard = () => {
                           {scan.timestamp ? new Date(scan.timestamp).toLocaleString() : 'No timestamp'}
                         </p>
                       </div>
-                      <span className={`px-2 py-1 text-xs rounded-full ml-2 ${
+                      <span className={`flex-shrink-0 px-2 py-1 text-xs rounded-full ml-2 ${
                         scan.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
                         {scan.success ? 'Success' : 'Failed'}
@@ -386,7 +412,7 @@ const Dashboard = () => {
                   {selectedScan.file_path && (
                     <div className="p-3 bg-gray-50 rounded">
                       <p className="text-sm font-medium">File Analyzed:</p>
-                      <p className="text-sm text-muted-foreground">{selectedScan.file_path}</p>
+                      <p className="text-sm text-muted-foreground overflow-x-auto whitespace-nowrap">{selectedScan.file_path}</p>
                     </div>
                   )}
 

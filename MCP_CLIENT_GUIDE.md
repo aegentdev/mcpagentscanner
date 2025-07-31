@@ -51,7 +51,7 @@ Response: "The directory scanning tool will automatically find and analyze all P
 
 ### 💡 Implementation Tips
 
-#### For Claude Desktop Users
+#### For Gemini Desktop Users
 - When users drag folders, suggest directory scanning
 - Provide examples in responses
 - Explain the benefits of comprehensive analysis
