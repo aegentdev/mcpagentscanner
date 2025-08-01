@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from typing import List, Dict, Any, NamedTuple
 from dataclasses import dataclass
 from pathlib import Path
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -30,60 +31,248 @@ class Risk:
     source: str  # 'static' or 'gemini'
 
 class StaticRiskDetector(ast.NodeVisitor):
-    """AST visitor that detects static security patterns"""
+    """Enhanced AST visitor that detects comprehensive security patterns"""
     
-    # Risk patterns organized by severity
+    # Critical security risks - immediate action required
     CRITICAL_CALLS = {
         # Code execution risks
         'eval': 'Avoid eval: use ast.literal_eval or safe parsing',
         'exec': 'Avoid exec: use function dispatch or sandboxing',
         'compile': 'Avoid compile with user input: validate code source',
+        '__import__': 'Avoid dynamic imports: use importlib safely',
+        'globals': 'Avoid globals() access: use explicit variable passing',
+        'locals': 'Avoid locals() access: use explicit variable passing',
+        
         # System operation risks
         'subprocess.call': 'Validate shell commands and avoid shell=True',
+        'subprocess.run': 'Validate shell commands and avoid shell=True',
+        'subprocess.Popen': 'Validate shell commands and avoid shell=True',
         'os.system': 'Use subprocess with argument lists instead',
+        'os.popen': 'Use subprocess with argument lists instead',
         'os.remove': 'Validate file paths to prevent directory traversal',
-        'shutil.rmtree': 'Validate paths and use absolute paths only'
+        'os.unlink': 'Validate file paths to prevent directory traversal',
+        'shutil.rmtree': 'Validate paths and use absolute paths only',
+        'shutil.copy': 'Validate source and destination paths',
+        'shutil.move': 'Validate source and destination paths',
+        
+        # Network and file risks
+        'urllib.request.urlopen': 'Validate URLs and use HTTPS',
+        'requests.get': 'Validate URLs and use HTTPS',
+        'requests.post': 'Validate URLs and use HTTPS',
+        'requests.request': 'Validate URLs and use HTTPS',
+        
+        # Database risks
+        'sqlite3.connect': 'Use parameterized queries to prevent SQL injection',
+        'cursor.execute': 'Use parameterized queries to prevent SQL injection',
+        'cursor.executemany': 'Use parameterized queries to prevent SQL injection',
     }
     
+    # Medium security risks - review and fix
     MEDIUM_RISK_PATTERNS = {
+        # AI/LLM specific risks
         'bind_tools': 'Validate tools before binding to LLM',
         'tools_by_name': 'Sanitize tool names from user input',
-        'open': 'Sanitize file paths and restrict destinations'
+        'get_tool': 'Validate tool names from user input',
+        'run_tool': 'Validate tool inputs and outputs',
+        'invoke_tool': 'Validate tool inputs and outputs',
+        
+        # File operations
+        'open': 'Sanitize file paths and restrict destinations',
+        'file': 'Sanitize file paths and restrict destinations',
+        'Path': 'Validate file paths to prevent directory traversal',
+        'pathlib.Path': 'Validate file paths to prevent directory traversal',
+        
+        # Configuration and environment
+        'os.environ': 'Validate environment variables',
+        'os.getenv': 'Validate environment variables',
+        'config.get': 'Validate configuration values',
+        'yaml.load': 'Use yaml.safe_load instead',
+        'json.loads': 'Validate JSON input size and structure',
+        'pickle.loads': 'Avoid pickle: use safe serialization',
+        'pickle.load': 'Avoid pickle: use safe serialization',
+        
+        # Template and string risks
+        'jinja2.Template': 'Validate template variables',
+        'string.Template': 'Validate template variables',
+        'str.format': 'Validate format strings',
+        'f-string': 'Validate f-string variables',
+        
+        # Network and API risks
+        'httpx.get': 'Validate URLs and use HTTPS',
+        'httpx.post': 'Validate URLs and use HTTPS',
+        'aiohttp.ClientSession': 'Validate URLs and use HTTPS',
+        'websocket.connect': 'Validate WebSocket URLs',
     }
     
+    # Low security risks - monitor and improve
     LOW_RISK_PATTERNS = {
-        'requests.get': 'Use HTTPS and validate URLs',
-        'urllib.request': 'Validate URLs and use secure protocols'
+        'print': 'Consider logging instead of print for production',
+        'logging.info': 'Validate log messages for sensitive data',
+        'logging.debug': 'Validate log messages for sensitive data',
+        'logging.error': 'Validate log messages for sensitive data',
+        'datetime.now': 'Consider timezone awareness',
+        'time.time': 'Consider timezone awareness',
+        'random.random': 'Use secrets module for cryptographic randomness',
+        'random.choice': 'Use secrets module for cryptographic randomness',
+    }
+    
+    # Import risks - check for dangerous modules
+    DANGEROUS_IMPORTS = {
+        'pickle': 'Use safe serialization like json or msgpack',
+        'marshal': 'Use safe serialization like json or msgpack',
+        'shelve': 'Use safe serialization like json or msgpack',
+        'tempfile': 'Validate temporary file usage',
+        'mktemp': 'Use mkstemp instead for secure temp files',
+    }
+    
+    # Variable assignment risks
+    DANGEROUS_ASSIGNMENTS = {
+        '__builtins__': 'Avoid modifying builtins',
+        '__globals__': 'Avoid modifying globals',
+        '__dict__': 'Validate dictionary modifications',
     }
     
     def __init__(self, file_path: str):
         self.file_path = file_path
         self.risks: List[Risk] = []
+        self.imports = set()
+        self.variables = set()
+        self.functions = set()
+        self.classes = set()
+        
+    def visit_Import(self, node: ast.Import) -> None:
+        """Detect dangerous imports"""
+        for alias in node.names:
+            module_name = alias.name.split('.')[0]  # Get base module name
+            if module_name in self.DANGEROUS_IMPORTS:
+                self.risks.append(Risk(
+                    file_path=self.file_path,
+                    line_number=getattr(node, 'lineno', 0),
+                    risk_type='dangerous_import',
+                    severity='medium',
+                    message=f'⚠️ Dangerous import: {module_name}',
+                    suggestion=self.DANGEROUS_IMPORTS[module_name],
+                    source='static'
+                ))
+            self.imports.add(module_name)
+        self.generic_visit(node)
+    
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        """Detect dangerous from imports"""
+        if node.module:
+            module_name = node.module.split('.')[0]
+            if module_name in self.DANGEROUS_IMPORTS:
+                self.risks.append(Risk(
+                    file_path=self.file_path,
+                    line_number=getattr(node, 'lineno', 0),
+                    risk_type='dangerous_import',
+                    severity='medium',
+                    message=f'⚠️ Dangerous import: from {module_name}',
+                    suggestion=self.DANGEROUS_IMPORTS[module_name],
+                    source='static'
+                ))
+            self.imports.add(module_name)
+        self.generic_visit(node)
+    
+    def visit_Assign(self, node: ast.Assign) -> None:
+        """Detect dangerous variable assignments"""
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                var_name = target.id
+                if var_name in self.DANGEROUS_ASSIGNMENTS:
+                    self.risks.append(Risk(
+                        file_path=self.file_path,
+                        line_number=getattr(node, 'lineno', 0),
+                        risk_type='dangerous_assignment',
+                        severity='critical',
+                        message=f'🚨 Dangerous assignment: {var_name}',
+                        suggestion=self.DANGEROUS_ASSIGNMENTS[var_name],
+                        source='static'
+                    ))
+                self.variables.add(var_name)
+        self.generic_visit(node)
+    
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        """Analyze function definitions for security issues"""
+        self.functions.add(node.name)
+        
+        # Check for dangerous function names
+        dangerous_funcs = ['eval', 'exec', 'system', 'shell', 'command']
+        if any(dangerous in node.name.lower() for dangerous in dangerous_funcs):
+            self.risks.append(Risk(
+                file_path=self.file_path,
+                line_number=getattr(node, 'lineno', 0),
+                risk_type='dangerous_function_name',
+                severity='medium',
+                message=f'⚠️ Suspicious function name: {node.name}',
+                suggestion='Review function implementation for security issues',
+                source='static'
+            ))
+        
+        # Check function arguments for potential injection points
+        for arg in node.args.args:
+            if arg.arg in ['user_input', 'data', 'content', 'payload', 'query']:
+                self.risks.append(Risk(
+                    file_path=self.file_path,
+                    line_number=getattr(node, 'lineno', 0),
+                    risk_type='potential_injection',
+                    severity='medium',
+                    message=f'⚠️ Potential injection point: {arg.arg} parameter',
+                    suggestion='Validate and sanitize user input before processing',
+                    source='static'
+                ))
+        
+        self.generic_visit(node)
+    
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        """Analyze class definitions"""
+        self.classes.add(node.name)
+        self.generic_visit(node)
     
     def visit_Call(self, node: ast.Call) -> None:
-        """Detect risky function calls"""
+        """Enhanced function call analysis"""
         line_no = getattr(node, 'lineno', 0)
         
-        # Check function name patterns
+        # Get function name and check for risks
         func_name = self._get_function_name(node)
         if func_name:
-            self._check_risk_patterns(func_name, line_no)
+            self._check_risk_patterns(func_name, line_no, node)
+        
+        # Check for string formatting risks
+        self._check_string_formatting_risks(node, line_no)
+        
+        # Check for shell command risks
+        self._check_shell_command_risks(node, line_no)
+        
+        # Check for file path risks
+        self._check_file_path_risks(node, line_no)
         
         self.generic_visit(node)
     
     def _get_function_name(self, node: ast.Call) -> str:
-        """Extract function name from call node"""
+        """Extract function name from call node with enhanced detection"""
         if isinstance(node.func, ast.Name):
             return node.func.id
         elif isinstance(node.func, ast.Attribute):
             # Handle module.function or obj.method calls
             if isinstance(node.func.value, ast.Name):
                 return f"{node.func.value.id}.{node.func.attr}"
+            elif isinstance(node.func.value, ast.Attribute):
+                # Handle nested attributes like module.submodule.function
+                return f"{self._get_attribute_chain(node.func.value)}.{node.func.attr}"
             return node.func.attr
         return ""
     
-    def _check_risk_patterns(self, func_name: str, line_no: int) -> None:
-        """Check function name against risk patterns"""
+    def _get_attribute_chain(self, node: ast.Attribute) -> str:
+        """Get full attribute chain for nested attributes"""
+        if isinstance(node.value, ast.Name):
+            return f"{node.value.id}.{node.attr}"
+        elif isinstance(node.value, ast.Attribute):
+            return f"{self._get_attribute_chain(node.value)}.{node.attr}"
+        return node.attr
+    
+    def _check_risk_patterns(self, func_name: str, line_no: int, node: ast.Call) -> None:
+        """Enhanced risk pattern checking with context analysis"""
         # Critical risks
         if func_name in self.CRITICAL_CALLS:
             self.risks.append(Risk(
@@ -96,7 +285,7 @@ class StaticRiskDetector(ast.NodeVisitor):
                 source='static'
             ))
         
-        # Medium risks (AI/LangGraph specific and file operations)
+        # Medium risks
         elif any(pattern in func_name for pattern in self.MEDIUM_RISK_PATTERNS):
             pattern = next(p for p in self.MEDIUM_RISK_PATTERNS if p in func_name)
             self.risks.append(Risk(
@@ -109,7 +298,7 @@ class StaticRiskDetector(ast.NodeVisitor):
                 source='static'
             ))
         
-        # Low risks (network operations)
+        # Low risks
         elif any(pattern in func_name for pattern in self.LOW_RISK_PATTERNS):
             pattern = next(p for p in self.LOW_RISK_PATTERNS if p in func_name)
             self.risks.append(Risk(
@@ -121,23 +310,334 @@ class StaticRiskDetector(ast.NodeVisitor):
                 suggestion=self.LOW_RISK_PATTERNS[pattern],
                 source='static'
             ))
+    
+    def _check_string_formatting_risks(self, node: ast.Call, line_no: int) -> None:
+        """Check for string formatting security risks"""
+        func_name = self._get_function_name(node)
+        
+        if func_name in ['str.format', 'format'] and node.args:
+            # Check if format string contains user input
+            for arg in node.args:
+                if isinstance(arg, ast.Name) and arg.id in self.variables:
+                    self.risks.append(Risk(
+                        file_path=self.file_path,
+                        line_number=line_no,
+                        risk_type='format_string_injection',
+                        severity='medium',
+                        message=f'⚠️ Format string injection risk: {arg.id}',
+                        suggestion='Validate format strings and escape user input',
+                        source='static'
+                    ))
+    
+    def _check_shell_command_risks(self, node: ast.Call, line_no: int) -> None:
+        """Check for shell command injection risks"""
+        func_name = self._get_function_name(node)
+        
+        if func_name in ['subprocess.call', 'subprocess.run', 'subprocess.Popen', 'os.system']:
+            # Check if shell=True is used
+            for keyword in node.keywords:
+                if keyword.arg == 'shell' and isinstance(keyword.value, ast.Constant):
+                    if keyword.value.value is True:
+                        self.risks.append(Risk(
+                            file_path=self.file_path,
+                            line_number=line_no,
+                            risk_type='shell_injection',
+                            severity='critical',
+                            message=f'🚨 Shell injection risk: shell=True detected',
+                            suggestion='Use argument lists instead of shell=True',
+                            source='static'
+                        ))
+            
+            # Check if command contains user input
+            if node.args and isinstance(node.args[0], ast.Name):
+                if node.args[0].id in self.variables:
+                    self.risks.append(Risk(
+                        file_path=self.file_path,
+                        line_number=line_no,
+                        risk_type='command_injection',
+                        severity='critical',
+                        message=f'🚨 Command injection risk: {node.args[0].id}',
+                        suggestion='Validate and sanitize command arguments',
+                        source='static'
+                    ))
+    
+    def _check_file_path_risks(self, node: ast.Call, line_no: int) -> None:
+        """Check for file path traversal risks"""
+        func_name = self._get_function_name(node)
+        
+        file_ops = ['open', 'os.remove', 'os.unlink', 'shutil.rmtree', 'shutil.copy', 'shutil.move']
+        if func_name in file_ops and node.args:
+            # Check if file path contains user input
+            if isinstance(node.args[0], ast.Name) and node.args[0].id in self.variables:
+                self.risks.append(Risk(
+                    file_path=self.file_path,
+                    line_number=line_no,
+                    risk_type='path_traversal',
+                    severity='critical',
+                    message=f'🚨 Path traversal risk: {node.args[0].id}',
+                    suggestion='Validate file paths and use absolute paths',
+                    source='static'
+                ))
 
 def scan_codebase_for_patterns(root_dir: str) -> List[Risk]:
-    """Scan a codebase for static security patterns"""
+    """Enhanced scan with comprehensive security analysis"""
     all_risks = []
     
     # Walk through Python files
     for file_path in Path(root_dir).rglob("*.py"):
         try:
-            detector = StaticRiskDetector(str(file_path))
             with open(file_path, 'r', encoding='utf-8') as f:
-                tree = ast.parse(f.read())
+                content = f.read()
+            
+            # Parse AST
+            tree = ast.parse(content)
+            detector = StaticRiskDetector(str(file_path))
             detector.visit(tree)
-            all_risks.extend(detector.risks)
+            
+            # Add file-specific risks
+            file_risks = detector.risks
+            
+            # Additional analysis
+            file_risks.extend(_analyze_file_content(str(file_path), content))
+            file_risks.extend(_analyze_dependencies(str(file_path), content))
+            file_risks.extend(_analyze_configuration(str(file_path), content))
+            
+            all_risks.extend(file_risks)
+            
         except Exception as e:
-            print(f"⚠️ Failed to analyze {file_path}: {e}")
+            print(f"⚠️ Error analyzing {file_path}: {e}")
+    
+    # Add project-level analysis
+    all_risks.extend(_analyze_project_structure(root_dir))
     
     return all_risks
+
+def _analyze_file_content(file_path: str, content: str) -> List[Risk]:
+    """Analyze file content for security issues"""
+    risks = []
+    
+    # Check for hardcoded secrets
+    secret_patterns = [
+        r'password\s*=\s*["\'][^"\']+["\']',
+        r'api_key\s*=\s*["\'][^"\']+["\']',
+        r'secret\s*=\s*["\'][^"\']+["\']',
+        r'token\s*=\s*["\'][^"\']+["\']',
+        r'private_key\s*=\s*["\'][^"\']+["\']',
+    ]
+    
+    for i, line in enumerate(content.split('\n'), 1):
+        for pattern in secret_patterns:
+            if re.search(pattern, line, re.IGNORECASE):
+                risks.append(Risk(
+                    file_path=file_path,
+                    line_number=i,
+                    risk_type='hardcoded_secret',
+                    severity='critical',
+                    message=f'🚨 Hardcoded secret detected',
+                    suggestion='Use environment variables or secure configuration management',
+                    source='static'
+                ))
+    
+    # Check for debug code in production
+    debug_patterns = [
+        r'import\s+pdb',
+        r'pdb\.set_trace\(\)',
+        r'breakpoint\(\)',
+        r'print\s*\(',
+        r'debug\s*=\s*True',
+    ]
+    
+    for i, line in enumerate(content.split('\n'), 1):
+        for pattern in debug_patterns:
+            if re.search(pattern, line, re.IGNORECASE):
+                risks.append(Risk(
+                    file_path=file_path,
+                    line_number=i,
+                    risk_type='debug_code',
+                    severity='low',
+                    message=f'ℹ️ Debug code detected',
+                    suggestion='Remove debug code before production deployment',
+                    source='static'
+                ))
+    
+    # Check for SQL injection patterns
+    sql_patterns = [
+        r'execute\s*\(\s*["\'][^"\']*\+',
+        r'execute\s*\(\s*f["\'][^"\']*\{[^}]*\}',
+        r'execute\s*\(\s*["\'][^"\']*%s',
+    ]
+    
+    for i, line in enumerate(content.split('\n'), 1):
+        for pattern in sql_patterns:
+            if re.search(pattern, line, re.IGNORECASE):
+                risks.append(Risk(
+                    file_path=file_path,
+                    line_number=i,
+                    risk_type='sql_injection',
+                    severity='critical',
+                    message=f'🚨 Potential SQL injection detected',
+                    suggestion='Use parameterized queries instead of string concatenation',
+                    source='static'
+                ))
+    
+    return risks
+
+def _analyze_dependencies(file_path: str, content: str) -> List[Risk]:
+    """Analyze dependencies for security issues"""
+    risks = []
+    
+    # Check for known vulnerable packages
+    vulnerable_packages = {
+        'requests': '2.28.0',  # Example version check
+        'urllib3': '1.26.0',
+        'cryptography': '3.4.0',
+    }
+    
+    # Extract import statements
+    import_pattern = r'^(?:from\s+(\w+)|import\s+(\w+))'
+    
+    for i, line in enumerate(content.split('\n'), 1):
+        match = re.match(import_pattern, line.strip())
+        if match:
+            package = match.group(1) or match.group(2)
+            if package in vulnerable_packages:
+                risks.append(Risk(
+                    file_path=file_path,
+                    line_number=i,
+                    risk_type='vulnerable_dependency',
+                    severity='medium',
+                    message=f'⚠️ Potentially vulnerable package: {package}',
+                    suggestion=f'Update {package} to version {vulnerable_packages[package]} or later',
+                    source='static'
+                ))
+    
+    return risks
+
+def _analyze_configuration(file_path: str, content: str) -> List[Risk]:
+    """Analyze configuration for security issues"""
+    risks = []
+    
+    # Check for insecure configuration patterns
+    config_patterns = [
+        (r'DEBUG\s*=\s*True', 'Debug mode enabled in production'),
+        (r'ALLOWED_HOSTS\s*=\s*\[\s*["\']\*["\']\s*\]', 'Wildcard allowed hosts'),
+        (r'SECRET_KEY\s*=\s*["\'][^"\']+["\']', 'Hardcoded secret key'),
+        (r'CORS_ORIGIN_ALLOW_ALL\s*=\s*True', 'CORS allows all origins'),
+    ]
+    
+    for i, line in enumerate(content.split('\n'), 1):
+        for pattern, message in config_patterns:
+            if re.search(pattern, line, re.IGNORECASE):
+                risks.append(Risk(
+                    file_path=file_path,
+                    line_number=i,
+                    risk_type='insecure_configuration',
+                    severity='medium',
+                    message=f'⚠️ {message}',
+                    suggestion='Review and secure configuration settings',
+                    source='static'
+                ))
+    
+    return risks
+
+def _analyze_project_structure(root_dir: str) -> List[Risk]:
+    """Analyze project structure for security issues"""
+    risks = []
+    
+    # Check for sensitive files
+    sensitive_files = [
+        '.env',
+        'config.py',
+        'settings.py',
+        'secrets.json',
+        'credentials.json',
+        '.pem',
+        '.key',
+    ]
+    
+    for file_path in Path(root_dir).rglob("*"):
+        if file_path.is_file():
+            file_name = file_path.name
+            if any(sensitive in file_name for sensitive in sensitive_files):
+                risks.append(Risk(
+                    file_path=str(file_path),
+                    line_number=0,
+                    risk_type='sensitive_file',
+                    severity='medium',
+                    message=f'⚠️ Sensitive file detected: {file_name}',
+                    suggestion='Ensure sensitive files are not committed to version control',
+                    source='static'
+                ))
+    
+    # Check for missing security files
+    security_files = [
+        '.gitignore',
+        'requirements.txt',
+        'Dockerfile',
+        'docker-compose.yml',
+    ]
+    
+    for security_file in security_files:
+        if not (Path(root_dir) / security_file).exists():
+            risks.append(Risk(
+                file_path=str(Path(root_dir) / security_file),
+                line_number=0,
+                risk_type='missing_security_file',
+                severity='low',
+                message=f'ℹ️ Missing security file: {security_file}',
+                suggestion=f'Consider adding {security_file} for better security practices',
+                source='static'
+            ))
+    
+    return risks
+
+def calculate_security_metrics(risks: List[Risk]) -> dict:
+    """Calculate comprehensive security metrics"""
+    total_risks = len(risks)
+    
+    # Count by severity
+    critical_count = sum(1 for r in risks if r.severity == 'critical')
+    medium_count = sum(1 for r in risks if r.severity == 'medium')
+    low_count = sum(1 for r in risks if r.severity == 'low')
+    
+    # Count by risk type
+    risk_types = {}
+    for risk in risks:
+        risk_types[risk.risk_type] = risk_types.get(risk.risk_type, 0) + 1
+    
+    # Count by source
+    static_count = sum(1 for r in risks if r.source == 'static')
+    gemini_count = sum(1 for r in risks if r.source == 'gemini')
+    
+    # Calculate risk score (weighted by severity)
+    risk_score = (critical_count * 10) + (medium_count * 5) + (low_count * 1)
+    
+    # Determine overall security rating
+    if risk_score == 0:
+        security_rating = "A+"
+    elif risk_score <= 10:
+        security_rating = "A"
+    elif risk_score <= 25:
+        security_rating = "B"
+    elif risk_score <= 50:
+        security_rating = "C"
+    elif risk_score <= 100:
+        security_rating = "D"
+    else:
+        security_rating = "F"
+    
+    return {
+        'total_risks': total_risks,
+        'critical_count': critical_count,
+        'medium_count': medium_count,
+        'low_count': low_count,
+        'risk_types': risk_types,
+        'static_count': static_count,
+        'gemini_count': gemini_count,
+        'risk_score': risk_score,
+        'security_rating': security_rating,
+        'files_analyzed': len(set(r.file_path for r in risks)),
+    }
 
 def parse_gemini_findings(gemini_response: dict) -> List[Risk]:
     """Parse Gemini's security findings into Risk objects"""
@@ -258,36 +758,34 @@ def _insert_gemini_header(lines: List[str], gemini_response: dict) -> None:
     lines[0:0] = header
 
 def analyze_and_comment_codebase(root_dir: str, gemini_response: dict = None) -> None:
-    """Perform comprehensive security analysis and annotation"""
-    print(f"🔍 Starting security analysis of: {root_dir}")
+    """Perform comprehensive security analysis and annotation with enhanced metrics"""
+    print(f"🔍 Starting enhanced security analysis of: {root_dir}")
     
-    # Phase 1: Static pattern detection
-    print("📊 Phase 1: Static pattern detection...")
+    # Phase 1: Enhanced static pattern detection
+    print("📊 Phase 1: Enhanced static pattern detection...")
     static_risks = scan_codebase_for_patterns(root_dir)
     
-    # Count risks by severity
-    critical_count = sum(1 for r in static_risks if r.severity == 'critical')
-    medium_count = sum(1 for r in static_risks if r.severity == 'medium')
-    low_count = sum(1 for r in static_risks if r.severity == 'low')
+    # Calculate static analysis metrics
+    static_metrics = calculate_security_metrics(static_risks)
     
-    print(f"   Found {len(static_risks)} static security patterns:")
-    print(f"     🚨 Critical: {critical_count}")
-    print(f"     ⚠️ Medium: {medium_count}")
-    print(f"     ℹ️ Low: {low_count}")
+    print(f"   Found {static_metrics['total_risks']} static security patterns:")
+    print(f"     🚨 Critical: {static_metrics['critical_count']}")
+    print(f"     ⚠️ Medium: {static_metrics['medium_count']}")
+    print(f"     ℹ️ Low: {static_metrics['low_count']}")
+    print(f"     📁 Files analyzed: {static_metrics['files_analyzed']}")
+    print(f"     📊 Security rating: {static_metrics['security_rating']}")
     
     # Phase 2: Integrate Gemini findings
     print("🤖 Phase 2: Integrating Gemini findings...")
     gemini_risks = []
     if gemini_response:
         gemini_risks = parse_gemini_findings(gemini_response)
-        gemini_critical = sum(1 for r in gemini_risks if r.severity == 'critical')
-        gemini_medium = sum(1 for r in gemini_risks if r.severity == 'medium')
-        gemini_low = sum(1 for r in gemini_risks if r.severity == 'low')
+        gemini_metrics = calculate_security_metrics(gemini_risks)
         
-        print(f"   Gemini identified {len(gemini_risks)} additional risks:")
-        print(f"     🚨 Critical: {gemini_critical}")
-        print(f"     ⚠️ Medium: {gemini_medium}")
-        print(f"     ℹ️ Low: {gemini_low}")
+        print(f"   Gemini identified {gemini_metrics['total_risks']} additional risks:")
+        print(f"     🚨 Critical: {gemini_metrics['critical_count']}")
+        print(f"     ⚠️ Medium: {gemini_metrics['medium_count']}")
+        print(f"     ℹ️ Low: {gemini_metrics['low_count']}")
     
     # Phase 3: Apply annotations
     print("✏️ Phase 3: Applying security comments...")
@@ -297,18 +795,66 @@ def analyze_and_comment_codebase(root_dir: str, gemini_response: dict = None) ->
     
     apply_comments_to_files(risks_by_file, gemini_response)
     
-    # Summary
-    total_risks = len(static_risks) + len(gemini_risks)
-    total_critical = critical_count + sum(1 for r in gemini_risks if r.severity == 'critical')
-    total_medium = medium_count + sum(1 for r in gemini_risks if r.severity == 'medium')
-    total_low = low_count + sum(1 for r in gemini_risks if r.severity == 'low')
+    # Phase 4: Calculate comprehensive metrics
+    print("📈 Phase 4: Calculating comprehensive security metrics...")
+    all_risks = static_risks + gemini_risks
+    comprehensive_metrics = calculate_security_metrics(all_risks)
     
-    print(f"\n📋 Security Analysis Summary:")
-    print(f"   Total risks identified: {total_risks}")
-    print(f"   🚨 Critical: {total_critical}")
-    print(f"   ⚠️ Medium: {total_medium}")
-    print(f"   ℹ️ Low: {total_low}")
-    print("✅ Security analysis complete!")
+    # Detailed risk type breakdown
+    print(f"\n📋 Risk Type Breakdown:")
+    for risk_type, count in comprehensive_metrics['risk_types'].items():
+        print(f"     {risk_type}: {count}")
+    
+    # Security rating and recommendations
+    print(f"\n🎯 Security Assessment:")
+    print(f"   Overall Security Rating: {comprehensive_metrics['security_rating']}")
+    print(f"   Risk Score: {comprehensive_metrics['risk_score']}")
+    
+    # Generate recommendations based on findings
+    recommendations = _generate_security_recommendations(comprehensive_metrics, all_risks)
+    print(f"\n💡 Security Recommendations:")
+    for i, rec in enumerate(recommendations[:5], 1):  # Top 5 recommendations
+        print(f"   {i}. {rec}")
+    
+    print("✅ Enhanced security analysis complete!")
+
+def _generate_security_recommendations(metrics: dict, risks: List[Risk]) -> List[str]:
+    """Generate actionable security recommendations based on analysis"""
+    recommendations = []
+    
+    # Critical risk recommendations
+    if metrics['critical_count'] > 0:
+        recommendations.append("Address all critical security risks immediately")
+        recommendations.append("Review and fix code execution vulnerabilities")
+        recommendations.append("Implement proper input validation for all user inputs")
+    
+    # Medium risk recommendations
+    if metrics['medium_count'] > 0:
+        recommendations.append("Review and secure file operations")
+        recommendations.append("Implement proper authentication and authorization")
+        recommendations.append("Add input sanitization for all external data")
+    
+    # Configuration recommendations
+    config_risks = [r for r in risks if r.risk_type == 'insecure_configuration']
+    if config_risks:
+        recommendations.append("Review and secure application configuration")
+        recommendations.append("Use environment variables for sensitive configuration")
+    
+    # Dependency recommendations
+    dep_risks = [r for r in risks if r.risk_type == 'vulnerable_dependency']
+    if dep_risks:
+        recommendations.append("Update vulnerable dependencies to latest secure versions")
+        recommendations.append("Implement dependency vulnerability scanning")
+    
+    # General recommendations
+    if metrics['security_rating'] in ['D', 'F']:
+        recommendations.append("Conduct comprehensive security audit")
+        recommendations.append("Implement security testing in CI/CD pipeline")
+    
+    recommendations.append("Consider implementing automated security scanning")
+    recommendations.append("Establish security code review process")
+    
+    return recommendations
 
 def repair_json(text: str) -> str:
     """Basic JSON repair for common Gemini output issues"""
@@ -697,6 +1243,223 @@ def send_results_to_webapp(results):
     except Exception as e:
         print(f"⚠️ Error sending results to web app: {e}")
 
+def generate_security_report(risks: List[Risk], output_file: str = None) -> str:
+    """Generate a comprehensive security report"""
+    metrics = calculate_security_metrics(risks)
+    
+    report = f"""
+# 🔒 Security Analysis Report
+
+## 📊 Executive Summary
+- **Overall Security Rating**: {metrics['security_rating']}
+- **Risk Score**: {metrics['risk_score']}
+- **Total Risks Identified**: {metrics['total_risks']}
+- **Files Analyzed**: {metrics['files_analyzed']}
+
+## 🚨 Critical Risks ({metrics['critical_count']})
+"""
+    
+    critical_risks = [r for r in risks if r.severity == 'critical']
+    for risk in critical_risks:
+        report += f"""
+### {risk.risk_type.replace('_', ' ').title()}
+- **File**: {risk.file_path}
+- **Line**: {risk.line_number}
+- **Message**: {risk.message}
+- **Suggestion**: {risk.suggestion}
+"""
+    
+    report += f"""
+## ⚠️ Medium Risks ({metrics['medium_count']})
+"""
+    
+    medium_risks = [r for r in risks if r.severity == 'medium']
+    for risk in medium_risks:
+        report += f"""
+### {risk.risk_type.replace('_', ' ').title()}
+- **File**: {risk.file_path}
+- **Line**: {risk.line_number}
+- **Message**: {risk.message}
+- **Suggestion**: {risk.suggestion}
+"""
+    
+    report += f"""
+## 📈 Risk Type Breakdown
+"""
+    
+    for risk_type, count in metrics['risk_types'].items():
+        report += f"- **{risk_type.replace('_', ' ').title()}**: {count}\n"
+    
+    report += f"""
+## 💡 Recommendations
+"""
+    
+    recommendations = _generate_security_recommendations(metrics, risks)
+    for i, rec in enumerate(recommendations, 1):
+        report += f"{i}. {rec}\n"
+    
+    report += f"""
+## 📅 Report Generated
+Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+"""
+    
+    if output_file:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(report)
+        print(f"📄 Security report saved to: {output_file}")
+    
+    return report
+
+def scan_dependencies_for_vulnerabilities(requirements_file: str = "requirements.txt") -> List[Risk]:
+    """Scan dependencies for known vulnerabilities"""
+    risks = []
+    
+    if not os.path.exists(requirements_file):
+        return risks
+    
+    try:
+        with open(requirements_file, 'r') as f:
+            requirements = f.read()
+        
+        # Parse requirements
+        for line in requirements.split('\n'):
+            line = line.strip()
+            if line and not line.startswith('#'):
+                # Extract package name and version
+                if '==' in line:
+                    package, version = line.split('==', 1)
+                elif '>=' in line:
+                    package, version = line.split('>=', 1)
+                elif '<=' in line:
+                    package, version = line.split('<=', 1)
+                else:
+                    package = line
+                    version = "unknown"
+                
+                package = package.strip()
+                version = version.strip()
+                
+                # Check against known vulnerable versions
+                if package in KNOWN_VULNERABLE_PACKAGES:
+                    vulnerable_versions = KNOWN_VULNERABLE_PACKAGES[package]
+                    if version in vulnerable_versions:
+                        risks.append(Risk(
+                            file_path=requirements_file,
+                            line_number=0,
+                            risk_type='vulnerable_dependency',
+                            severity='critical',
+                            message=f'🚨 Vulnerable dependency: {package} {version}',
+                            suggestion=f'Update {package} to a secure version',
+                            source='static'
+                        ))
+    
+    except Exception as e:
+        print(f"⚠️ Error scanning dependencies: {e}")
+    
+    return risks
+
+# Known vulnerable package versions (example)
+KNOWN_VULNERABLE_PACKAGES = {
+    'requests': ['2.25.0', '2.25.1', '2.26.0'],
+    'urllib3': ['1.26.0', '1.26.1', '1.26.2'],
+    'cryptography': ['3.3.0', '3.3.1', '3.3.2'],
+    'django': ['3.1.0', '3.1.1', '3.1.2'],
+    'flask': ['2.0.0', '2.0.1', '2.0.2'],
+}
+
+def analyze_security_configuration(config_file: str) -> List[Risk]:
+    """Analyze security configuration files"""
+    risks = []
+    
+    if not os.path.exists(config_file):
+        return risks
+    
+    try:
+        with open(config_file, 'r') as f:
+            content = f.read()
+        
+        # Check for common security misconfigurations
+        security_checks = [
+            (r'DEBUG\s*=\s*True', 'Debug mode enabled in production'),
+            (r'ALLOWED_HOSTS\s*=\s*\[\s*["\']\*["\']\s*\]', 'Wildcard allowed hosts'),
+            (r'SECRET_KEY\s*=\s*["\'][^"\']+["\']', 'Hardcoded secret key'),
+            (r'CORS_ORIGIN_ALLOW_ALL\s*=\s*True', 'CORS allows all origins'),
+            (r'CSRF_COOKIE_SECURE\s*=\s*False', 'CSRF cookie not secure'),
+            (r'SESSION_COOKIE_SECURE\s*=\s*False', 'Session cookie not secure'),
+            (r'PASSWORD_HASHERS\s*=\s*\[[^\]]*["\']django\.contrib\.auth\.hashers\.MD5PasswordHasher["\'][^\]]*\]', 'MD5 password hashing'),
+        ]
+        
+        for i, line in enumerate(content.split('\n'), 1):
+            for pattern, message in security_checks:
+                if re.search(pattern, line, re.IGNORECASE):
+                    risks.append(Risk(
+                        file_path=config_file,
+                        line_number=i,
+                        risk_type='insecure_configuration',
+                        severity='medium',
+                        message=f'⚠️ {message}',
+                        suggestion='Review and secure configuration settings',
+                        source='static'
+                    ))
+    
+    except Exception as e:
+        print(f"⚠️ Error analyzing configuration: {e}")
+    
+    return risks
+
+def perform_comprehensive_security_audit(root_dir: str) -> dict:
+    """Perform a comprehensive security audit"""
+    print("🔍 Starting comprehensive security audit...")
+    
+    audit_results = {
+        'static_analysis': [],
+        'dependency_scan': [],
+        'configuration_scan': [],
+        'project_structure': [],
+        'metrics': {},
+        'recommendations': [],
+        'report': ''
+    }
+    
+    # 1. Static code analysis
+    print("📊 Phase 1: Static code analysis...")
+    audit_results['static_analysis'] = scan_codebase_for_patterns(root_dir)
+    
+    # 2. Dependency vulnerability scan
+    print("📦 Phase 2: Dependency vulnerability scan...")
+    requirements_file = os.path.join(root_dir, "requirements.txt")
+    audit_results['dependency_scan'] = scan_dependencies_for_vulnerabilities(requirements_file)
+    
+    # 3. Configuration analysis
+    print("⚙️ Phase 3: Configuration analysis...")
+    config_files = ['settings.py', 'config.py', '.env', 'docker-compose.yml']
+    for config_file in config_files:
+        config_path = os.path.join(root_dir, config_file)
+        if os.path.exists(config_path):
+            audit_results['configuration_scan'].extend(analyze_security_configuration(config_path))
+    
+    # 4. Project structure analysis
+    print("📁 Phase 4: Project structure analysis...")
+    audit_results['project_structure'] = _analyze_project_structure(root_dir)
+    
+    # 5. Calculate comprehensive metrics
+    print("📈 Phase 5: Calculating comprehensive metrics...")
+    all_risks = (audit_results['static_analysis'] + 
+                audit_results['dependency_scan'] + 
+                audit_results['configuration_scan'] + 
+                audit_results['project_structure'])
+    
+    audit_results['metrics'] = calculate_security_metrics(all_risks)
+    audit_results['recommendations'] = _generate_security_recommendations(audit_results['metrics'], all_risks)
+    
+    # 6. Generate comprehensive report
+    print("📄 Phase 6: Generating comprehensive report...")
+    report_file = os.path.join(root_dir, "security_audit_report.md")
+    audit_results['report'] = generate_security_report(all_risks, report_file)
+    
+    print("✅ Comprehensive security audit complete!")
+    return audit_results
+
 # --- End inlined dependencies ---
 
 mcp = FastMCP(name="AutohardenerServer")
@@ -799,6 +1562,52 @@ def autoharden_agent(agent_path: str) -> dict:
 def ping_pong(random_string: str = "test") -> dict:
     """A dummy tool that returns pong."""
     return {"response": "pong", "input": random_string}
+
+@mcp.tool
+def comprehensive_security_audit(project_path: str) -> dict:
+    """Perform a comprehensive security audit of a project"""
+    try:
+        print(f"🔍 Starting comprehensive security audit for: {project_path}")
+        
+        # Validate project path
+        if not os.path.exists(project_path):
+            return {
+                "error": f"Project path not found: {project_path}",
+                "success": False
+            }
+        
+        # Perform comprehensive audit
+        audit_results = perform_comprehensive_security_audit(project_path)
+        
+        # Send results to web app if available
+        try:
+            send_results_to_webapp({
+                "audit_type": "comprehensive_security_audit",
+                "project_path": project_path,
+                "metrics": audit_results['metrics'],
+                "total_risks": audit_results['metrics']['total_risks'],
+                "security_rating": audit_results['metrics']['security_rating'],
+                "recommendations": audit_results['recommendations'][:5],  # Top 5
+                "timestamp": datetime.now().isoformat()
+            })
+        except Exception as e:
+            print(f"⚠️ Could not send results to web app: {e}")
+        
+        return {
+            "success": True,
+            "project_path": project_path,
+            "metrics": audit_results['metrics'],
+            "recommendations": audit_results['recommendations'],
+            "report_file": os.path.join(project_path, "security_audit_report.md"),
+            "message": f"Comprehensive security audit completed for {project_path}"
+        }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "success": False,
+            "project_path": project_path
+        }
 
 if __name__ == "__main__":
     mcp.run() 
